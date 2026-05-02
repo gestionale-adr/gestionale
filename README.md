@@ -1,0 +1,2 @@
+# gestionale
+File per contabilità
