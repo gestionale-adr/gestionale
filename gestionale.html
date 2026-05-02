@@ -1,0 +1,2989 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestionale</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#F0F4FF;--surface:#FFFFFF;--surface2:#F5F7FF;--border:#D8DEF5;--border2:#B8C4E8;
+    --text:#1A1C2E;--text2:#5A6080;--text3:#9AA0C0;
+    --accent:#2D6BE4;--accent2:#E8F0FF;--accent3:#1A4FC4;
+    --green:#1A8C4E;--green2:#E6F7EE;--green3:#0D6B3A;
+    --red:#D63030;--red2:#FEF0F0;--red3:#B01A1A;
+    --amber:#C07000;--amber2:#FFF7E0;--amber3:#956000;
+    --pink:#C0186A;--pink2:#FEF0F7;
+    --purple:#7C3AED;--purple2:#F3EEFF;
+    --teal:#0E8080;--teal2:#E6F7F7;
+    --orange:#E05500;--orange2:#FFF3EC;
+    --radius:12px;--radius-sm:7px;
+    --shadow:0 2px 8px rgba(45,107,228,0.10),0 1px 3px rgba(0,0,0,0.06);
+    --shadow-lg:0 8px 24px rgba(45,107,228,0.15),0 2px 8px rgba(0,0,0,0.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+
+  /* HEADER */
+  header{background:linear-gradient(135deg,#1A3A8C 0%,#2D6BE4 60%,#4A8FF5 100%);border-bottom:none;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(29,74,200,0.3)}
+  .logo{font-size:18px;font-weight:700;letter-spacing:-0.5px;color:#fff}
+  .logo span{color:#A8CFFF}
+  .date-badge{font-family:'DM Mono',monospace;font-size:12px;color:#A8CFFF;background:rgba(255,255,255,0.15);padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.25)}
+
+  /* MONTH BAR */
+  .month-bar{background:linear-gradient(90deg,#E8F0FF,#EEF3FF);border-bottom:2px solid var(--border);padding:10px 1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .month-bar label{font-size:11px;font-weight:700;color:var(--accent3);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}
+  .month-bar select{padding:6px 12px;border:1.5px solid var(--accent2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;cursor:pointer;font-weight:500}
+  .month-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(45,107,228,0.15)}
+  .month-pill{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;border-radius:20px;padding:5px 16px;font-size:12px;font-weight:700;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(45,107,228,0.3)}
+
+  /* NAV */
+  .nav{background:#fff;border-bottom:2px solid var(--border);padding:0 1.5rem;display:flex;gap:2px;overflow-x:auto;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+  .nav-btn{padding:12px 16px;background:none;border:none;border-bottom:3px solid transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all .2s;margin-bottom:-2px}
+  .nav-btn:hover{color:var(--accent);background:var(--accent2)}
+  .nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;background:var(--accent2)}
+
+  /* MAIN */
+  .main{padding:1.5rem 2rem;max-width:1280px;margin:0 auto}
+  .section{display:none}.section.active{display:block}
+
+  /* CARDS */
+  .card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1.1rem;box-shadow:var(--shadow);transition:box-shadow .2s}
+  .card:hover{box-shadow:var(--shadow-lg)}
+  .card-title{font-size:12px;font-weight:700;color:var(--accent3);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.7px;display:flex;align-items:center;gap:6px}
+  .card-title::before{content:'';display:inline-block;width:4px;height:14px;background:var(--accent);border-radius:2px}
+
+  /* FORM */
+  .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+  .field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:110px}
+  .field label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px}
+  .field input,.field select{padding:8px 11px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;transition:all .15s}
+  .field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(45,107,228,0.12);background:#FAFCFF}
+
+  /* BUTTONS */
+  .btn{padding:8px 18px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border2);background:#fff;color:var(--text);transition:all .15s;white-space:nowrap;letter-spacing:0.2px}
+  .btn:hover{background:var(--surface2);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+  .btn:active{transform:translateY(0)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;border-color:var(--accent3);box-shadow:0 2px 8px rgba(45,107,228,0.3)}
+  .btn.primary:hover{background:linear-gradient(135deg,#3A7AF0,#1340B8);box-shadow:0 4px 14px rgba(45,107,228,0.4)}
+  .btn.danger{background:var(--red2);color:var(--red3);border-color:#F0B0B0;padding:5px 10px;font-size:12px}
+  .btn.danger:hover{background:#FFD8D8;box-shadow:0 2px 6px rgba(214,48,48,0.2)}
+  .btn.success{background:var(--green2);color:var(--green3);border-color:#90D4AA;padding:5px 10px;font-size:12px}
+  .btn.success:hover{background:#CCF0DC}
+  .btn.edit{background:var(--amber2);color:var(--amber3);border:1.5px solid #E0C060;padding:5px 12px;font-size:12px;font-weight:600}
+  .btn.edit:hover{background:#FFF0A0;box-shadow:0 2px 6px rgba(192,112,0,0.2)}
+  .btn.cancel{background:var(--surface2);color:var(--text2);border:1.5px solid var(--border2);padding:8px 16px;font-size:13px;font-weight:500}
+  .btn.cancel:hover{background:var(--border)}
+  .editing-banner{background:linear-gradient(90deg,var(--amber2),#FFF8D0);border:1.5px solid #E0C060;border-radius:var(--radius-sm);padding:10px 16px;font-size:13px;color:var(--amber3);font-weight:600;margin-bottom:10px;display:none}
+  .editing-banner.visible{display:block}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{text-align:left;padding:9px 10px;background:linear-gradient(90deg,#EEF2FF,#E8EEFF);border-bottom:2px solid var(--border);font-size:10.5px;font-weight:700;color:var(--accent3);text-transform:uppercase;letter-spacing:0.5px}
+  tbody td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+  tbody tr:hover td{background:#F5F8FF}
+  tbody tr:nth-child(even) td{background:#FAFBFF}
+  tbody tr:nth-child(even):hover td{background:#F0F4FF}
+  tbody tr:last-child td{border-bottom:none}
+  .empty-row{text-align:center;padding:2.5rem;color:var(--text3);font-size:13px}
+
+  /* METRICS */
+  .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin-bottom:1.1rem}
+  .metric{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.2rem;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:all .2s}
+  .metric:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+  .metric::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+  .metric.m-green::before{background:linear-gradient(90deg,var(--green),#40D080)}
+  .metric.m-red::before{background:linear-gradient(90deg,var(--red),#FF6060)}
+  .metric.m-blue::before{background:linear-gradient(90deg,var(--accent),#60A0FF)}
+  .metric.m-amber::before{background:linear-gradient(90deg,var(--amber),#F0B040)}
+  .metric.m-purple::before{background:linear-gradient(90deg,var(--purple),#A060FF)}
+  .metric .m-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+  .metric .m-value{font-size:22px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace}
+  .m-value.green{color:var(--green)}.m-value.red{color:var(--red)}.m-value.blue{color:var(--accent)}.m-value.amber{color:var(--amber)}
+
+  /* BADGES */
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.2px}
+  .b-green{background:var(--green2);color:var(--green3);border:1px solid #90D4AA}
+  .b-red{background:var(--red2);color:var(--red3);border:1px solid #F0B0B0}
+  .b-blue{background:var(--accent2);color:var(--accent3);border:1px solid #90B8F0}
+  .b-amber{background:var(--amber2);color:var(--amber3);border:1px solid #E0C060}
+  .b-gray{background:#EEF0F8;color:#5A6080;border:1px solid #C8CCE0}
+  .b-pink{background:var(--pink2);color:var(--pink);border:1px solid #F090C0}
+  .b-purple{background:var(--purple2);color:var(--purple);border:1px solid #C090F0}
+
+  /* LAYOUT */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+  @media(max-width:640px){.two-col{grid-template-columns:1fr}}
+  .saldo-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .saldo-row:last-child{border-bottom:none}
+  .ricond-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+  .hidden{display:none!important}
+
+  /* AUTOCOMPLETE */
+  .autocomplete-wrap{position:relative;flex:1}
+  .autocomplete-wrap input{width:100%}
+  .ac-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--accent);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:220px;overflow-y:auto;z-index:200;box-shadow:0 8px 24px rgba(45,107,228,0.15);display:none}
+  .ac-dropdown.open{display:block}
+  .ac-item{padding:9px 13px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+  .ac-item:last-child{border-bottom:none}
+  .ac-item:hover,.ac-item.selected{background:var(--accent2);color:var(--accent3)}
+  .ac-item .ac-sub{font-size:11px;color:var(--text3);margin-top:1px}
+  .ac-item.selected .ac-sub{color:var(--accent)}
+
+  /* TABLE STICKY */
+  .table-wrap{overflow-x:auto;border-radius:var(--radius-sm)}
+  .tbl-azioni{position:sticky;right:0;background:#fff;box-shadow:-3px 0 8px rgba(45,107,228,0.1);white-space:nowrap;z-index:2}
+  thead .tbl-azioni{background:linear-gradient(90deg,#EEF2FF,#E8EEFF)}
+
+  /* STORICO */
+  .storico-mese{border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:.8rem;overflow:hidden;transition:box-shadow .2s}
+  .storico-mese:hover{box-shadow:var(--shadow)}
+  .storico-header{display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem;background:linear-gradient(90deg,#EEF2FF,#E8EEFF);cursor:pointer;user-select:none;gap:1rem;flex-wrap:wrap}
+  .storico-header:hover{background:linear-gradient(90deg,#E0E8FF,#D8E4FF)}
+  .sh-title{font-weight:700;font-size:14px;color:var(--accent3);white-space:nowrap}
+  .sh-nums{display:flex;gap:1rem;font-size:12px;color:var(--text2);flex-wrap:wrap}
+  .storico-body{display:none;padding:1.1rem;background:#fff}
+  .storico-body.open{display:block}
+
+  /* RITIRI */
+  .check-cell{text-align:center}
+  input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent)}
+  .stato-check{display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap}
+  .riga-completata td{opacity:0.45;text-decoration:line-through}
+  .riga-completata td:last-child{opacity:1;text-decoration:none}
+  .print-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+
+  /* COLORI CARD SPECIALI per sezioni */
+  #sec-riepilogo .card:first-child{border-top:4px solid var(--accent);background:linear-gradient(160deg,#F8FAFF,#fff)}
+  #sec-riepilogo .two-col .card:first-child{border-top:4px solid var(--green);background:linear-gradient(160deg,#F5FFF9,#fff)}
+  #sec-riepilogo .two-col .card:last-child{border-top:4px solid var(--accent);background:linear-gradient(160deg,#F5F8FF,#fff)}
+
+  /* EVIDENZIA valori importanti in tabella */
+  .val-positive{color:var(--green);font-weight:700}
+  .val-negative{color:var(--red);font-weight:700}
+  .val-neutral{color:var(--accent);font-weight:700}
+
+  @media print{
+    header,.month-bar,.nav,.print-bar,.btn,.no-print{display:none!important}
+    body{background:#fff;font-size:12px}
+    .main{padding:0;max-width:100%}
+    .section{display:block!important}
+    .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid}
+    #sec-ritiri{display:block!important}
+    input[type=checkbox]{-webkit-appearance:checkbox;appearance:checkbox}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GESTIONALE</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="drive-status"></div>
+    <div class="date-badge" id="oggi"></div>
+  </div>
+</header>
+
+<div class="month-bar">
+  <label>Mese attivo:</label>
+  <select id="sel-anno"></select>
+  <select id="sel-mese"></select>
+  <span class="month-pill" id="mese-pill"></span>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="T('vendite')">Vendite</button>
+  <button class="nav-btn" onclick="T('uscite')">Spese</button>
+  <button class="nav-btn" onclick="T('resi')">Resi / Difettosi</button>
+  <button class="nav-btn" onclick="T('acconti')">Acconti</button>
+  <button class="nav-btn" onclick="T('clienti')">Clienti</button>
+  <button class="nav-btn" onclick="T('fornitori')">Fornitori</button>
+  <button class="nav-btn" onclick="T('riepilogo')">Riepilogo mese</button>
+  <button class="nav-btn" onclick="T('storico')">Storico mesi</button>
+  <button class="nav-btn" onclick="T('debitiFor')">Debiti fornitori</button>
+  <button class="nav-btn" onclick="T('ritiri')">Ritiri da gestire</button>
+  <button class="nav-btn" onclick="T('insoluti')">Insoluti clienti</button>
+  <button class="nav-btn" onclick="T('resiClienti')">Resi clienti</button>
+  <button class="nav-btn" onclick="T('soldiInMano')">Soldi in mano ai soci</button>
+</nav>
+
+<div class="main">
+
+<!-- VENDITE -->
+<div id="sec-vendite" class="section active">
+
+  <!-- MODAL MODIFICA VENDITA -->
+  <div id="vm-overlay" onclick="chiudiModalVendita()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="vm-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(680px,96vw);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:15px;font-weight:700;color:var(--accent3)">Modifica vendita</div>
+      <button onclick="chiudiModalVendita()" class="btn" style="padding:4px 10px">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Cliente</label>
+        <div class="autocomplete-wrap" id="vm-ac-wrap">
+          <input id="vm-cli-txt" placeholder="Scrivi per cercare..." autocomplete="off"
+            oninput="vmAcFilter()" onkeydown="vmAcKey(event)" onfocus="vmAcFilter()" onblur="vmAcBlur()">
+          <input type="hidden" id="vm-cli">
+          <div class="ac-dropdown" id="vm-ac-list"></div>
+        </div>
+      </div>
+      <div class="field" style="flex:2"><label>Articolo</label><input id="vm-art" placeholder="Nome articolo"></div>
+      <div class="field"><label>Fornitore</label><select id="vm-for"></select></div>
+      <div class="field" style="max-width:155px"><label>Data</label><input id="vm-data" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Prezzo vendita €</label><input id="vm-prez" type="number" step="0.01" placeholder="0.00" style="border:2px solid var(--accent);background:var(--accent2);font-weight:700;font-size:14px;color:var(--accent3)"></div>
+      <div class="field"><label>Costo acquisto €</label><input id="vm-costo" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:80px"><label>Qtà</label><input id="vm-qty" type="number" value="1" min="1"></div>
+      <div class="field" style="max-width:110px"><label>Codice</label><input id="vm-cod" placeholder="ART001"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>IVA</label><select id="vm-iva"><option value="0">Esente IVA</option><option value="22">22%</option></select></div>
+      <div class="field"><label>Ricondizionato</label><select id="vm-ricond"><option value="no">No</option><option value="si">Sì – da ritirare</option></select></div>
+      <div class="field"><label>Pagamento</label><select id="vm-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
+      <div class="field"><label>Stato</label><select id="vm-stato" onchange="vmToggleAcconto()"><option value="nonpagato">Non pagato</option><option value="pagato">Pagato</option><option value="acconto">Acconto</option></select></div>
+      <div class="field hidden" id="vm-acc-wrap"><label>Acconto €</label><input id="vm-acconto" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:3"><label>Note</label><input id="vm-note" placeholder=""></div>
+    </div>
+    <input type="hidden" id="vm-id">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:.8rem">
+      <button class="btn cancel" onclick="chiudiModalVendita()">Annulla</button>
+      <button class="btn primary" onclick="salvaModalVendita()">Salva modifiche</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" id="v-form-title">Nuova vendita</div>
+    <div class="editing-banner" id="v-edit-banner">Stai modificando una vendita esistente</div>
+    <div class="form-row">
+      <div class="field" style="max-width:155px"><label>Data vendita</label><input id="v-data" type="date"></div>
+      <div class="field" style="flex:1.4;min-width:130px"><label>Cliente</label>
+        <div class="autocomplete-wrap" id="ac-wrap">
+          <input id="v-cli-txt" placeholder="Scrivi per cercare..." autocomplete="off"
+            oninput="acFilter()" onkeydown="acKey(event)" onfocus="acFilter()" onblur="acBlur()">
+          <input type="hidden" id="v-cli">
+          <div class="ac-dropdown" id="ac-list"></div>
+        </div>
+      </div>
+      <div class="field" style="flex:1.4;min-width:130px"><label>Articolo</label>
+        <div class="autocomplete-wrap" id="art-ac-wrap">
+          <input id="v-art" placeholder="Nome articolo" autocomplete="off"
+            oninput="artAcFilter()" onkeydown="artAcKey(event)" onfocus="artAcFilter()" onblur="artAcBlur()">
+          <div class="ac-dropdown" id="art-ac-list"></div>
+        </div>
+      </div>
+      <div class="field" style="flex:1.8;min-width:180px"><label>Fornitore</label><select id="v-for"></select></div>
+      <div class="field"><label>Costo acquisto €</label><input id="v-costo" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label>Prezzo vendita €</label><input id="v-prez" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:80px"><label>Qtà</label><input id="v-qty" type="number" value="1" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="max-width:110px"><label>Codice</label><input id="v-cod" placeholder="ART001"></div>
+      <div class="field"><label>IVA</label><select id="v-iva"><option value="0">Esente IVA</option><option value="22">22%</option></select></div>
+      <div class="field"><label>Ricondizionato</label><select id="v-ricond"><option value="">— seleziona —</option><option value="no">No</option><option value="si">Sì – da ritirare</option></select></div>
+      <div class="field"><label>Pagamento</label><select id="v-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
+      <div class="field"><label>Stato</label><select id="v-stato" onchange="toggleAcconto()"><option value="nonpagato">Non pagato</option><option value="pagato">Pagato</option><option value="acconto">Acconto</option></select></div>
+      <div class="field hidden" id="acc-wrap"><label>Acconto ricevuto €</label><input id="v-acconto" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="max-width:160px"><label>Note</label><input id="v-note" placeholder=""></div>
+      <button class="btn primary" id="v-submit-btn" onclick="submitVendita()">+ Registra vendita</button>
+      <button class="btn cancel" id="v-cancel-btn" onclick="cancelEditVendita()" style="display:none">Annulla modifica</button>
+      <button class="btn" onclick="svuotaCampiVendita()" style="background:var(--orange2);color:var(--orange);border-color:#F0B080;font-weight:600" title="Cancella tutti i campi">Svuota campi</button>
+    </div>
+    <input type="hidden" id="v-edit-id" value="">
+    <input type="hidden" id="v-socio" value="Ciro">
+  </div>
+  <div style="display:flex;gap:1rem;align-items:flex-start">
+    <div class="card" style="flex:1;min-width:0">
+      <div class="card-title">Vendite del mese</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Data</th><th>Cliente</th><th>Articolo</th><th>Codice</th><th style="color:var(--red3)">Prezzo da pagare</th><th style="color:var(--green3)">Prezzo pagato</th><th style="color:var(--green3)">Pagato</th><th>Incassato da</th><th>Costo</th><th class="tbl-azioni">Azioni</th></tr></thead>
+        <tbody id="tbl-v"></tbody>
+      </table></div>
+    </div>
+    <div class="card" style="min-width:160px;max-width:180px;position:sticky;top:130px">
+      <div class="card-title" style="font-size:11px">Guadagno netto</div>
+      <table style="width:100%">
+        <thead><tr><th style="font-size:10px;padding:5px 7px">Vendita</th><th style="font-size:10px;padding:5px 7px;color:var(--green3)">Guadagno</th></tr></thead>
+        <tbody id="tbl-guadagno"></tbody>
+      </table>
+      <div style="margin-top:10px;padding:8px 10px;background:var(--green2);border-radius:var(--radius-sm);border:1px solid #90D4AA">
+        <div style="font-size:10px;font-weight:700;color:var(--green3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Totale</div>
+        <div id="guadagno-totale" style="font-size:22px;font-weight:700;color:var(--green3);font-family:'DM Mono',monospace">€ 0.00</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SPESE -->
+<div id="sec-uscite" class="section">
+
+  <!-- MODAL MODIFICA SPESA -->
+  <div id="um-overlay" onclick="chiudiModalUscita()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="um-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(680px,96vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:15px;font-weight:700;color:var(--accent3)">Modifica spesa</div>
+      <button onclick="chiudiModalUscita()" class="btn" style="padding:4px 10px">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="field" style="max-width:160px"><label>Data</label><input id="um-data" type="date"></div>
+      <div class="field" style="flex:2"><label>Spesa</label>
+        <select id="um-cat" onchange="umToggleFor()">
+          <option value="fornitore">Pagamento fornitore</option>
+          <option value="stipendio_carmen">Stipendio Carmen</option>
+          <option value="benzina">Benzina</option>
+          <option value="beppe">Compenso Beppe</option>
+          <option value="altro">Altro</option>
+        </select>
+      </div>
+      <div class="field" id="um-for-wrap" style="flex:2"><label>Fornitore</label><select id="um-for"></select></div>
+      <div class="field" style="max-width:150px"><label>Importo €</label><input id="um-imp" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Descrizione</label><input id="um-desc" placeholder=""></div>
+      <div class="field" style="max-width:160px"><label>Periodo</label><input id="um-per" placeholder="es. sett. 15"></div>
+      <div class="field"><label>Modalità</label><select id="um-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
+      <div class="field"><label>Pagato da</label><select id="um-socio"><option value="Entrambi">Entrambi (50/50)</option><option value="Ciro">Ciro</option><option value="Gigi">Gigi</option></select></div>
+    </div>
+    <input type="hidden" id="um-id">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:.8rem">
+      <button class="btn cancel" onclick="chiudiModalUscita()">Annulla</button>
+      <button class="btn primary" onclick="salvaModalUscita()">Salva modifiche</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Registra spesa</div>
+    <div class="form-row">
+      <div class="field" style="max-width:160px"><label>Data</label><input id="u-data" type="date"></div>
+      <div class="field" style="max-width:280px"><label>Spesa</label>
+        <select id="u-cat" onchange="toggleUscita()">
+          <option value="">— seleziona spesa —</option>
+          <option value="fornitore">Pagamento fornitore</option>
+          <option value="stipendio_carmen">Stipendio Carmen</option>
+          <option value="benzina">Benzina</option>
+          <option value="beppe">Compenso Beppe</option>
+          <option value="altro">Altro</option>
+        </select>
+      </div>
+      <div class="field" id="u-for-wrap" style="max-width:260px"><label>Fornitore</label><select id="u-for"></select></div>
+      <div class="field" style="max-width:150px"><label>Importo €</label><input id="u-imp" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:180px"><label>Modalità pagamento</label><select id="u-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
+      <div class="field" style="max-width:190px"><label>Pagato da</label>
+        <select id="u-socio">
+          <option value="">— seleziona —</option>
+          <option value="Entrambi">Entrambi (50/50)</option>
+          <option value="Ciro">Ciro</option>
+          <option value="Gigi">Gigi</option>
+        </select>
+      </div>
+      <button class="btn primary" style="align-self:flex-end" onclick="addUscita()">+ Registra</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Spese del mese</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Data</th><th>Spesa</th><th>Importo</th><th>Modalità</th><th>Pagato da</th><th></th></tr></thead>
+      <tbody id="tbl-u"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- RESI -->
+<div id="sec-resi" class="section">
+  <div class="card">
+    <div class="card-title">Registra reso / articolo difettoso</div>
+    <div class="form-row">
+      <div class="field" style="max-width:120px"><label>Codice</label><input id="r-cod" placeholder=""></div>
+      <div class="field" style="flex:2"><label>Descrizione</label><input id="r-desc" placeholder="Nome articolo"></div>
+      <div class="field"><label>Fornitore</label><select id="r-for"></select></div>
+      <div class="field"><label>Valore unitario €</label><input id="r-val" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:90px"><label>Qtà</label><input id="r-qty" type="number" value="1" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Tipo</label>
+        <select id="r-tipo">
+          <option value="ricondizionato">Ricondizionato – reso a fornitore</option>
+          <option value="garanzia">Difettoso – garanzia riconosciuta</option>
+          <option value="nogaranzia">Difettoso – garanzia NON riconosciuta (noi paghiamo)</option>
+        </select>
+      </div>
+      <div class="field"><label>Note</label><input id="r-note" placeholder=""></div>
+      <div class="field" style="max-width:155px"><label>Data</label><input id="r-data" type="date"></div>
+      <button class="btn primary" onclick="addReso()">+ Registra</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Resi del mese</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Data</th><th>Codice</th><th>Articolo</th><th>Fornitore</th><th>Cliente</th><th>Valore</th><th>Qtà</th><th>Totale</th><th>Tipo</th><th>Effetto</th><th>Stato/Note</th><th></th></tr></thead>
+      <tbody id="tbl-r"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ACCONTI -->
+<div id="sec-acconti" class="section">
+  <div class="card">
+    <div class="card-title">Registra acconto</div>
+    <div class="form-row">
+      <div class="field"><label>Direzione</label>
+        <select id="a-dir" onchange="toggleAccontoDir()">
+          <option value="dafornitore">Da noi a fornitore</option>
+          <option value="dacliente">Da cliente a noi</option>
+        </select>
+      </div>
+      <div class="field" id="a-for-w"><label>Fornitore</label><select id="a-for"></select></div>
+      <div class="field hidden" id="a-cli-w"><label>Cliente</label><select id="a-cli"></select></div>
+      <div class="field"><label>Importo €</label><input id="a-imp" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label>Modalità</label><select id="a-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
+      <div class="field"><label>Note</label><input id="a-note" placeholder=""></div>
+      <div class="field" style="max-width:155px"><label>Data</label><input id="a-data" type="date"></div>
+      <button class="btn primary" onclick="addAcconto()">+ Registra</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Acconti del mese</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Data</th><th>Direzione</th><th>Nome</th><th>Importo</th><th>Modalità</th><th>Note</th><th></th></tr></thead>
+      <tbody id="tbl-a"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- CLIENTI -->
+<div id="sec-clienti" class="section">
+
+  <!-- MODAL MODIFICA CLIENTE -->
+  <div id="cl-modal-overlay" onclick="chiudiModalCliente()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="cl-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(600px,95vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:15px;font-weight:700;color:var(--accent3)">Scheda cliente</div>
+      <button onclick="chiudiModalCliente()" class="btn" style="padding:4px 10px;font-size:13px">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Ragione Sociale</label><input id="cl-m-nome" placeholder="es. AUTO JOLLY"></div>
+      <div class="field"><label>Nome</label><input id="cl-m-ref" placeholder="es. Giulio"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Indirizzo</label><input id="cl-m-ind" placeholder="Via..."></div>
+      <div class="field"><label>Città</label><input id="cl-m-city" placeholder="es. Torino"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Telefono</label><input id="cl-m-tel" placeholder=""></div>
+      <div class="field"><label>Note</label><input id="cl-m-note" placeholder=""></div>
+    </div>
+    <input type="hidden" id="cl-m-id">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:.5rem">
+      <button class="btn cancel" onclick="chiudiModalCliente()">Annulla</button>
+      <button class="btn primary" onclick="salvaModalCliente()">Salva modifiche</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Aggiungi cliente</div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Ragione Sociale</label><input id="cl-nome" placeholder="es. AUTO JOLLY"></div>
+      <div class="field"><label>Nome</label><input id="cl-ref" placeholder="es. Giulio"></div>
+      <div class="field" style="flex:2"><label>Indirizzo</label><input id="cl-ind" placeholder="Via..."></div>
+      <div class="field"><label>Città</label><input id="cl-city" placeholder="es. Torino"></div>
+      <div class="field"><label>Telefono</label><input id="cl-tel" placeholder=""></div>
+      <div class="field"><label>Note</label><input id="cl-note" placeholder=""></div>
+      <button class="btn primary" onclick="addCliente()">+ Aggiungi</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Situazione clienti – mese attivo</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:1rem">
+      <input id="cl-search" placeholder="🔍  Cerca per nome, città, telefono..." oninput="filtraClienti()"
+        style="flex:1;padding:9px 14px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;transition:all .15s"
+        onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px rgba(45,107,228,0.12)'"
+        onblur="this.style.borderColor='';this.style.boxShadow=''">
+      <button class="btn" onclick="$('cl-search').value='';filtraClienti()" style="white-space:nowrap">✕ Cancella</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Ragione Sociale</th><th>Nome</th><th>Indirizzo</th><th>Città</th><th>Telefono</th><th>Deve pagare €</th><th>Acconti €</th><th>Saldo €</th><th>Stato</th><th></th></tr></thead>
+      <tbody id="tbl-cl"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- FORNITORI -->
+<div id="sec-fornitori" class="section">
+
+  <!-- MODAL RESOCONTO FORNITORE -->
+  <!-- MODAL MODIFICA ANAGRAFICA FORNITORE -->
+  <div id="fe-overlay" onclick="chiudiEditFornitore()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:400;backdrop-filter:blur(2px)"></div>
+  <div id="fe-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:401;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(520px,96vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:15px;font-weight:700;color:var(--accent3)">Modifica fornitore</div>
+      <button onclick="chiudiEditFornitore()" class="btn" style="padding:4px 10px">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Nome / Ragione sociale</label><input id="fe-nome" placeholder=""></div>
+      <div class="field"><label>Telefono</label><input id="fe-tel" placeholder=""></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>IBAN</label><input id="fe-iban" placeholder="per bonifici"></div>
+      <div class="field"><label>Creditore (gruppo)</label><input id="fe-creditore" placeholder="es. GAVAZZA"></div>
+    </div>
+    <input type="hidden" id="fe-id">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:.8rem">
+      <button class="btn cancel" onclick="chiudiEditFornitore()">Annulla</button>
+      <button class="btn primary" onclick="salvaEditFornitore()">Salva modifiche</button>
+    </div>
+  </div>
+
+  <div id="fm-overlay" onclick="chiudiModalFornitore()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="fm-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(780px,96vw);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div>
+        <div id="fm-title" style="font-size:16px;font-weight:700;color:var(--accent3)"></div>
+        <div id="fm-subtitle" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="fm-edit-btn" onclick="apriEditFornitoreCorrente()" class="btn edit" style="padding:5px 12px;font-size:12px">Modifica dati</button>
+        <button onclick="chiudiModalFornitore()" class="btn" style="padding:4px 10px">✕</button>
+      </div>
+    </div>
+    <!-- riepilogo numeri -->
+    <div id="fm-stats" class="metrics-grid" style="margin-bottom:1rem"></div>
+    <!-- lista articoli acquistati -->
+    <div style="font-size:12px;font-weight:700;color:var(--accent3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:.6rem">Articoli acquistati questo mese</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Data</th><th>Articolo</th><th>Cod.</th><th>Costo unit.</th><th>Qtà</th><th>Totale costo</th><th>Venduto a</th><th>Stato</th></tr></thead>
+      <tbody id="fm-tbl"></tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Aggiungi fornitore</div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Nome / Ragione sociale</label><input id="f-nome" placeholder=""></div>
+      <div class="field"><label>Telefono</label><input id="f-tel" placeholder=""></div>
+      <div class="field"><label>IBAN</label><input id="f-iban" placeholder="per bonifici"></div>
+      <div class="field"><label>Creditore (gruppo)</label><input id="f-creditore" placeholder="es. GAVAZZA"></div>
+      <button class="btn primary" onclick="addFornitore()">+ Aggiungi</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Situazione fornitori – mese attivo</div>
+    <div style="margin-bottom:10px;padding:9px 14px;background:var(--purple2);border:1.5px solid var(--purple);border-radius:var(--radius-sm);font-size:12px;color:var(--purple);font-weight:600;display:flex;align-items:center;gap:8px">
+      <span>🟣</span>
+      <span>La colonna <strong>Debito vecchio €</strong> (viola) è separata dal saldo del mese. Inserisci manualmente l'importo per ciascun fornitore nel mese attivo. Il valore viene salvato per ogni fornitore e ogni mese individualmente.</span>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Fornitore</th><th>Creditore</th><th>Telefono</th><th>Acquistato €</th><th>Pagato €</th><th>Acconti dati €</th><th>Resi scalati €</th><th>Saldo da pagare €</th><th style="color:var(--purple);background:var(--purple2)">Debito vecchio €</th><th></th></tr></thead>
+      <tbody id="tbl-f"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- RIEPILOGO -->
+<div id="sec-riepilogo" class="section">
+  <div class="card">
+    <div class="card-title" id="rip-title">Riepilogo mese</div>
+    <div class="metrics-grid" id="met"></div>
+  </div>
+  <div class="two-col">
+    <div class="card"><div class="card-title" style="color:var(--accent)">Ciro</div><div id="ric-ciro"></div></div>
+    <div class="card"><div class="card-title" style="color:var(--blue)">Gigi</div><div id="ric-gigi"></div></div>
+  </div>
+  <div class="two-col">
+    <div class="card"><div class="card-title">Fornitori – saldo da pagare</div><div id="ric-for"></div></div>
+    <div class="card"><div class="card-title">Clienti – saldo da incassare</div><div id="ric-cli"></div></div>
+  </div>
+  <div class="card"><div class="card-title">Ricondizionati da ritirare</div><div id="ric-ricond"></div></div>
+  <div class="card">
+    <div class="card-title">Stampe rapide</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn primary" onclick="stampaInsoluti()" style="display:flex;align-items:center;gap:8px;padding:10px 20px">
+        <span style="font-size:16px">🖨</span> Stampa lista insoluti clienti
+      </button>
+      <button class="btn" onclick="stampaResiDaRitirare()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--pink2);color:var(--pink);border-color:#F090C0;font-weight:600">
+        <span style="font-size:16px">🖨</span> Stampa lista resi da ritirare
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STORICO -->
+<div id="sec-storico" class="section">
+  <div class="card">
+    <div class="card-title">Storico per mese solare</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:1rem">Clicca su un mese per espandere il dettaglio completo.</p>
+    <div id="storico-lista"></div>
+  </div>
+</div>
+
+<!-- ARTICOLI RICONDIZIONATI DA RITIRARE -->
+<div id="sec-ritiri" class="section">
+  <div class="card">
+    <div class="print-bar">
+      <div>
+        <div class="card-title" style="margin-bottom:4px">Articoli ricondizionati da ritirare</div>
+        <p style="font-size:12px;color:var(--text2)">Si aggiornano automaticamente quando registri una vendita con "Ricondizionato: Sì – da ritirare"</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px" class="no-print">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="chk-nascondi-completati" onchange="renderRitiri()" style="width:16px;height:16px;accent-color:var(--accent)">
+          Nascondi completati
+        </label>
+      </div>
+    </div>
+
+    <!-- contatori -->
+    <div class="metrics-grid" style="margin-bottom:1rem" id="ritiri-stats"></div>
+
+    <div class="table-wrap"><table id="tbl-ritiri-wrap">
+      <thead><tr>
+        <th>Data vendita</th>
+        <th>Mese</th>
+        <th>Codice</th>
+        <th>Articolo</th>
+        <th>Cliente</th>
+        <th>Fornitore</th>
+        <th>Qtà</th>
+        <th>Prezzo</th>
+        <th>Socio</th>
+        <th>Note</th>
+        <th class="check-cell" style="min-width:100px">Ritirato<br>dal cliente</th>
+        <th class="check-cell" style="min-width:100px">Restituito<br>al fornitore</th>
+      </tr></thead>
+      <tbody id="tbl-ritiri"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- INSOLUTI CLIENTI -->
+<div id="sec-insoluti" class="section">
+  <div class="card">
+    <div class="print-bar">
+      <div>
+        <div class="card-title" style="margin-bottom:4px">Insoluti clienti</div>
+        <p style="font-size:12px;color:var(--text2)">Saldi aperti per ogni cliente, divisi per mese</p>
+      </div>
+      <button class="btn primary no-print" onclick="stampaInsolutiDettaglio()">🖨 Stampa lista insoluti</button>
+    </div>
+    <div id="insoluti-content"></div>
+  </div>
+</div>
+
+<!-- DEBITI FORNITORI -->
+<div id="sec-debitiFor" class="section">
+  <div class="card">
+    <div class="print-bar">
+      <div>
+        <div class="card-title" style="margin-bottom:4px">Debiti verso fornitori</div>
+        <p style="font-size:12px;color:var(--text2)">Tutti i saldi aperti verso i fornitori, mese per mese</p>
+      </div>
+      <button class="btn primary" onclick="stampaDebitiFor()">🖨 Stampa lista debiti</button>
+    </div>
+    <!-- totale globale in evidenza -->
+    <div id="df-totale" style="display:none;margin-bottom:1rem;padding:16px 20px;background:var(--red2);border:2px solid #F0B0B0;border-radius:var(--radius);text-align:center">
+      <div style="font-size:12px;font-weight:600;color:var(--red3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Totale debiti verso tutti i fornitori</div>
+      <div id="df-totale-val" style="font-size:36px;font-weight:700;color:var(--red3);font-family:'DM Mono',monospace"></div>
+    </div>
+    <div id="df-content"></div>
+  </div>
+</div>
+
+<!-- RESI CLIENTI -->
+<div id="sec-resiClienti" class="section">
+  <div class="card">
+    <div class="print-bar">
+      <div>
+        <div class="card-title" style="margin-bottom:4px">Resi clienti da ritirare</div>
+        <p style="font-size:12px;color:var(--text2)">Articoli ricondizionati da ritirare dai clienti — tutti i mesi</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="chk-rc-completati" onchange="renderResiClienti()" style="width:16px;height:16px;accent-color:var(--accent)">
+          Nascondi ritirati
+        </label>
+        <button class="btn primary" onclick="stampaResiClienti()">🖨 Stampa lista</button>
+      </div>
+    </div>
+    <div class="metrics-grid" id="rc-stats" style="margin-bottom:1rem"></div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Data vendita</th>
+        <th>Cliente</th>
+        <th>Articolo da ritirare</th>
+        <th>Fornitore</th>
+        <th>Mese</th>
+        <th class="check-cell" style="min-width:110px">Ritirato<br>dal cliente</th>
+      </tr></thead>
+      <tbody id="tbl-rc"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- SOLDI IN MANO AI SOCI -->
+<div id="sec-soldiInMano" class="section">
+  <div class="card">
+    <div class="card-title">Soldi in mano ai soci – mese attivo</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:1.2rem">
+      Calcolo: <strong>Incassato</strong> − <strong>Spese pagate</strong> − <strong>Guadagno a testa (50% margine)</strong>
+    </p>
+    <div class="two-col">
+      <!-- CIRO -->
+      <div class="card" style="border-top:4px solid var(--green);background:linear-gradient(160deg,var(--green2),#fff)">
+        <div class="card-title" style="color:var(--green3);font-size:16px">Ciro</div>
+        <div id="sim-ciro"></div>
+      </div>
+      <!-- GIGI -->
+      <div class="card" style="border-top:4px solid var(--accent);background:linear-gradient(160deg,var(--accent2),#fff)">
+        <div class="card-title" style="color:var(--accent3);font-size:16px">Gigi</div>
+        <div id="sim-gigi"></div>
+      </div>
+    </div>
+    <!-- TOTALE -->
+    <div style="padding:16px 20px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border);text-align:center;margin-top:.5rem">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Totale soldi in mano (Ciro + Gigi)</div>
+      <div id="sim-totale" style="font-size:32px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)"></div>
+    </div>
+    <!-- DETTAGLIO CALCOLO -->
+    <div id="sim-dettaglio" style="margin-top:1rem;padding:1rem;background:var(--surface2);border-radius:var(--radius);font-size:12px;color:var(--text2);line-height:2"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+let S = { fornitori:[], clienti:[], mesi:{} };
+let meseAttivo = '';
+const $ = id => document.getElementById(id);
+const fmt = n => '€\u00a0'+parseFloat(n||0).toFixed(2);
+const todayStr = () => { const d=new Date(); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; };
+const todayISO = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+function isoToIt(iso){ if(!iso)return todayStr(); const[y,m,g]=iso.split('-'); return`${g}/${m}/${y}`; }
+function itToISO(it){ if(!it)return todayISO(); const[g,m,y]=it.split('/'); return`${y}-${m}-${g}`; }
+const mkKey = (y,m) => `${y}-${String(m+1).padStart(2,'0')}`;
+function getMese(k){ if(!S.mesi[k]) S.mesi[k]={vendite:[],uscite:[],resi:[],acconti:[]}; return S.mesi[k]; }
+const M = () => getMese(meseAttivo);
+
+const GAPI_CLIENT_ID = '880944027998-ca7e72ugurpvnsu1p26mee2i447p6oa3.apps.googleusercontent.com';
+const GAPI_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+const DRIVE_FILE_NAME = 'gestionale-adr-dati.json';
+const AUTHORIZED_ORIGIN = 'https://gestionale-adr.github.io';
+var _driveFileId = null;
+var _gapiReady = false;
+var _tokenClient = null;
+
+// ---- SALVATAGGIO LOCALE (sempre) + DRIVE (quando loggato) ----
+function save(){
+  try{ localStorage.setItem('gest_cg4', JSON.stringify(S)); }catch(e){}
+  if(_gapiReady && _driveFileId) saveToDrive();
+}
+
+function load(){
+  try{ const d=localStorage.getItem('gest_cg4'); if(d) S=JSON.parse(d); }catch(e){}
+  if(!S.mesi) S.mesi={};
+  if(!S.fornitori) S.fornitori=[];
+  if(!S.clienti) S.clienti=[];
+  if(!S.debitiVecchi) S.debitiVecchi={};
+  const gavazzaGroup = ['meat','sidat','maclon','mec-diesel','mecdiesel','mec diesel'];
+  S.fornitori.forEach(f=>{
+    if(!f.creditore){
+      const n = f.nome.toLowerCase().trim();
+      if(gavazzaGroup.some(g=>n.includes(g))) f.creditore='GAVAZZA';
+    }
+  });
+  render();
+}
+
+// ---- GOOGLE DRIVE ----
+function initGoogleDrive(){
+  var script = document.createElement('script');
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.onload = function(){
+    var s2 = document.createElement('script');
+    s2.src = 'https://apis.google.com/js/api.js';
+    s2.onload = function(){
+      gapi.load('client', function(){
+        gapi.client.init({}).then(function(){
+          gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest').then(function(){
+            _gapiReady = true;
+            _tokenClient = google.accounts.oauth2.initTokenClient({
+              client_id: GAPI_CLIENT_ID,
+              scope: GAPI_SCOPES,
+              callback: onDriveToken
+            });
+            aggiornaStatoDrive('disconnesso');
+          });
+        });
+      });
+    };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(script);
+}
+
+function loginDrive(){
+  if(!_gapiReady){ alert('Attendere il caricamento di Google...'); return; }
+  _tokenClient.requestAccessToken({prompt:'consent'});
+}
+
+function logoutDrive(){
+  var token = gapi.client.getToken();
+  if(token){ google.accounts.oauth2.revoke(token.access_token, function(){}); }
+  gapi.client.setToken(null);
+  _driveFileId = null;
+  aggiornaStatoDrive('disconnesso');
+}
+
+function onDriveToken(resp){
+  if(resp.error){ console.error(resp); return; }
+  aggiornaStatoDrive('connesso');
+  trovaCreaFileDrive();
+}
+
+function aggiornaStatoDrive(stato){
+  var el = document.getElementById('drive-status');
+  if(!el) return;
+  if(stato==='connesso'){
+    el.innerHTML = '<span style="color:var(--green3);font-weight:600">☁ Drive connesso</span> <button onclick="logoutDrive()" class="btn" style="padding:3px 10px;font-size:11px;margin-left:8px">Disconnetti</button>';
+  } else if(stato==='sincronizzato'){
+    el.innerHTML = '<span style="color:var(--green3);font-weight:600">☁ Salvato su Drive</span> <button onclick="logoutDrive()" class="btn" style="padding:3px 10px;font-size:11px;margin-left:8px">Disconnetti</button>';
+    setTimeout(function(){ aggiornaStatoDrive('connesso'); }, 2000);
+  } else {
+    el.innerHTML = '<button onclick="loginDrive()" class="btn primary" style="padding:5px 14px;font-size:12px">☁ Connetti Google Drive</button>';
+  }
+}
+
+function trovaCreaFileDrive(){
+  gapi.client.drive.files.list({
+    spaces: 'appDataFolder',
+    q: 'name="'+DRIVE_FILE_NAME+'"',
+    fields: 'files(id,name)'
+  }).then(function(resp){
+    var files = resp.result.files;
+    if(files && files.length > 0){
+      _driveFileId = files[0].id;
+      loadFromDrive(); // carica i dati da Drive
+    } else {
+      creaFileDrive(); // prima volta: crea il file
+    }
+  }).catch(function(e){ console.error('Drive list error', e); });
+}
+
+function loadFromDrive(){
+  gapi.client.drive.files.get({
+    fileId: _driveFileId,
+    alt: 'media'
+  }).then(function(resp){
+    try{
+      var dati = JSON.parse(resp.body);
+      // confronta timestamp e prendi il più recente
+      var localTs = (S && S._ts) ? S._ts : 0;
+      var driveTs = dati._ts || 0;
+      if(driveTs > localTs){
+        S = dati;
+        if(!S.mesi) S.mesi={};
+        if(!S.fornitori) S.fornitori=[];
+        if(!S.clienti) S.clienti=[];
+        if(!S.debitiVecchi) S.debitiVecchi={};
+        localStorage.setItem('gest_cg4', JSON.stringify(S));
+        render();
+        mostraNotifica('Dati caricati da Google Drive ☁');
+      }
+    }catch(e){ console.error('Parse Drive error', e); }
+    aggiornaStatoDrive('connesso');
+  }).catch(function(e){ console.error('Drive get error', e); aggiornaStatoDrive('connesso'); });
+}
+
+function saveToDrive(){
+  if(!_driveFileId) return;
+  S._ts = Date.now(); // timestamp per capire chi è più recente
+  var body = JSON.stringify(S);
+  fetch('https://www.googleapis.com/upload/drive/v3/files/'+_driveFileId+'?uploadType=media', {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer '+gapi.client.getToken().access_token,
+      'Content-Type': 'application/json'
+    },
+    body: body
+  }).then(function(r){
+    if(r.ok) aggiornaStatoDrive('sincronizzato');
+  }).catch(function(e){ console.error('Drive save error', e); });
+}
+
+function creaFileDrive(){
+  S._ts = Date.now();
+  var boundary = '-------314159265358979323846';
+  var body = '--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'
+    +JSON.stringify({name: DRIVE_FILE_NAME, parents: ['appDataFolder']})
+    +'\r\n--'+boundary+'\r\nContent-Type: application/json\r\n\r\n'
+    +JSON.stringify(S)
+    +'\r\n--'+boundary+'--';
+  fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer '+gapi.client.getToken().access_token,
+      'Content-Type': 'multipart/related; boundary="'+boundary+'"'
+    },
+    body: body
+  }).then(function(r){ return r.json(); })
+  .then(function(data){
+    _driveFileId = data.id;
+    aggiornaStatoDrive('sincronizzato');
+  }).catch(function(e){ console.error('Drive create error', e); });
+}
+
+function mostraNotifica(testo){
+  var n = document.getElementById('drive-notifica');
+  if(!n){ n=document.createElement('div'); n.id='drive-notifica';
+    n.style.cssText='position:fixed;bottom:20px;right:20px;background:var(--green3);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)';
+    document.body.appendChild(n); }
+  n.textContent=testo; n.style.display='block';
+  setTimeout(function(){ n.style.display='none'; }, 3000);
+}
+
+
+function initMeseSel(){
+  const now=new Date(); const cy=now.getFullYear(); const cm=now.getMonth();
+  const sa=$('sel-anno'); const sm=$('sel-mese');
+  sa.innerHTML=''; for(let y=cy-3;y<=cy+1;y++) sa.innerHTML+=`<option value="${y}"${y===cy?' selected':''}>${y}</option>`;
+  sm.innerHTML=MESI.map((n,i)=>`<option value="${i}"${i===cm?' selected':''}>${n}</option>`).join('');
+  meseAttivo=mkKey(cy,cm); aggiornaPill();
+  sa.addEventListener('change',cambiaMese); sm.addEventListener('change',cambiaMese);
+}
+function cambiaMese(){ meseAttivo=mkKey(+$('sel-anno').value,+$('sel-mese').value); aggiornaPill(); render(); const a=document.querySelector('.nav-btn.active'); if(a){const m=a.getAttribute('onclick').match(/T\('(\w+)'\)/);if(m)T(m[1]);} }
+function aggiornaPill(){ const [y,m]=meseAttivo.split('-'); $('mese-pill').textContent=`${MESI[+m-1]} ${y}`; }
+
+function T(t){
+  const tabs=['vendite','uscite','resi','acconti','clienti','fornitori','riepilogo','storico','debitiFor','ritiri','insoluti','resiClienti','soldiInMano'];
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===t));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  $('sec-'+t).classList.add('active');
+  if(t==='riepilogo') renderRiepilogo();
+  if(t==='storico') renderStorico();
+  if(t==='ritiri') renderRitiri();
+  if(t==='insoluti') renderInsoluti();
+  if(t==='resiClienti') renderResiClienti();
+  if(t==='debitiFor') renderDebitiFor();
+  if(t==='soldiInMano') renderSoldiInMano();
+}
+
+function popolaSelects(){
+  const fO='<option value="">— seleziona fornitore —</option>'+(S.fornitori.length?S.fornitori.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'');
+  const cO='<option value="">— contanti —</option>'+S.clienti.map(c=>`<option value="${c.id}">${c.nome}${c.ref?' ('+c.ref+')':''}</option>`).join('');
+  ['v-for','u-for','r-for','a-for'].forEach(id=>{const e=$(id);if(e)e.innerHTML=fO;});
+  // a-cli è ancora un select normale
+  const aCli=$('a-cli'); if(aCli) aCli.innerHTML=cO;
+}
+function toggleAcconto(){ $('acc-wrap').classList.toggle('hidden',$('v-stato').value!=='acconto'); }
+function toggleUscita(){ $('u-for-wrap').classList.toggle('hidden',$('u-cat').value!=='fornitore'); }
+function toggleAccontoDir(){ const d=$('a-dir').value; $('a-for-w').classList.toggle('hidden',d!=='dafornitore'); $('a-cli-w').classList.toggle('hidden',d!=='dacliente'); }
+
+// ---- saldi calcolati dal mese ----
+function saldoCli(cid,k){
+  const ms=getMese(k);
+  const dov=ms.vendite.filter(v=>v.cid==cid&&v.stato==='nonpagato').reduce((s,v)=>s+v.totLordo,0)
+           +ms.vendite.filter(v=>v.cid==cid&&v.stato==='acconto').reduce((s,v)=>s+(v.totLordo-v.acconto),0);
+  const acc=ms.acconti.filter(a=>a.dir==='dacliente'&&a.id2==cid).reduce((s,a)=>s+a.imp,0);
+  return {dovuto:dov,acconti:acc,saldo:dov-acc};
+}
+function saldoFor(fid,k){
+  const ms=getMese(k);
+  const acq=ms.vendite.filter(v=>v.fid==fid).reduce((s,v)=>s+v.totCosto,0)
+           +ms.resi.filter(r=>r.fid==fid&&r.tipo==='nogaranzia').reduce((s,r)=>s+r.tot,0);
+  const pag=ms.uscite.filter(u=>u.cat==='fornitore'&&u.fid==fid).reduce((s,u)=>s+u.imp,0);
+  const acc=ms.acconti.filter(a=>a.dir==='dafornitore'&&a.id2==fid).reduce((s,a)=>s+a.imp,0);
+  const res=ms.resi.filter(r=>r.fid==fid&&r.tipo!=='nogaranzia').reduce((s,r)=>s+r.tot,0);
+  // debito vecchio: i pagamenti scalano prima da lì, poi dal mese corrente
+  const dvKey=`dv_${fid}_${k}`;
+  const dv=parseFloat((S.debitiVecchi&&S.debitiVecchi[dvKey])||0);
+  const pagSuDV=Math.min(pag,dv);           // quota del pagamento che copre il debito vecchio
+  const pagSuMese=Math.max(0,pag-dv);       // quota che copre il mese corrente
+  const dvResiduo=Math.max(0,dv-pag);       // debito vecchio ancora da saldare
+  const saldo=Math.max(0,acq-pagSuMese-acc-res);
+  return {acquistato:acq,pagato:pag,acconti:acc,resi:res,saldo,debitoVecchio:dv,debitoVecchioResiduo:dvResiduo,pagSuDV,pagSuMese};
+}
+
+// ---- FORNITORI ----
+function filtraClienti(){
+  const q=($('cl-search').value||'').trim().toLowerCase();
+  const righe=document.querySelectorAll('#tbl-cl tr');
+  righe.forEach(r=>{
+    if(!q){ r.style.display=''; return; }
+    r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+
+function umToggleFor(){ $('um-for-wrap').classList.toggle('hidden',$('um-cat').value!=='fornitore'); }
+
+function apriModalUscita(id){
+  const u=M().uscite.find(x=>x.id===id); if(!u)return;
+  const fO='<option value="">— seleziona fornitore —</option>'+(S.fornitori.length?S.fornitori.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'');
+  $('um-for').innerHTML=fO;
+  $('um-id').value=id;
+  $('um-data').value=itToISO(u.data||todayStr());
+  $('um-cat').value=u.cat||'altro';
+  $('um-for').value=u.fid||'';
+  $('um-imp').value=u.imp||'';
+  $('um-desc').value=u.desc||'';
+  $('um-per').value=u.per||'';
+  $('um-pag').value=u.pag||'contanti';
+  $('um-socio').value=u.socio||'Entrambi';
+  umToggleFor();
+  $('um-modal').style.display='block';
+  $('um-overlay').style.display='block';
+}
+function chiudiModalUscita(){
+  $('um-modal').style.display='none';
+  $('um-overlay').style.display='none';
+}
+function salvaModalUscita(){
+  const id=+$('um-id').value;
+  const imp=parseFloat($('um-imp').value)||0; if(imp<=0)return alert('Inserisci importo');
+  const cat=$('um-cat').value;
+  const fid=cat==='fornitore'?$('um-for').value:'';
+  if(cat==='fornitore'&&!fid)return alert('⚠️ Seleziona un fornitore prima di continuare!');
+  const f=fid?S.fornitori.find(x=>x.id==fid):null;
+  const labs={fornitore:'Pag. fornitore',stipendio_carmen:'Stipendio Carmen',benzina:'Benzina',beppe:'Compenso Beppe',altro:'Altro'};
+  const fnome=f?f.nome:'';
+  const idx=M().uscite.findIndex(x=>x.id===id); if(idx===-1)return;
+  const old=M().uscite[idx];
+  // aggiusta pagato fornitore se cambiato
+  if(old.cat==='fornitore'&&old.fid){const fo=S.fornitori.find(x=>x.id==old.fid);if(fo)fo.pagato-=old.imp;}
+  if(cat==='fornitore'&&fid){const fn=S.fornitori.find(x=>x.id==fid);if(fn)fn.pagato+=imp;}
+  M().uscite[idx]={...old,
+    data:isoToIt($('um-data').value||todayISO()),
+    cat,label:labs[cat]+(fnome?' – '+fnome:''),
+    imp,pag:$('um-pag').value,desc:$('um-desc').value.trim(),
+    per:$('um-per').value.trim(),fid,socio:$('um-socio').value
+  };
+  chiudiModalUscita(); save(); render();
+}
+
+function apriModalVendita(id){
+  const v=M().vendite.find(x=>x.id===id); if(!v)return;
+  // popola fornitore select nel modal
+  const fO='<option value="">— seleziona fornitore —</option>'+(S.fornitori.length?S.fornitori.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'');
+  $('vm-for').innerHTML=fO;
+  $('vm-id').value=id;
+  $('vm-data').value=itToISO(v.data||todayStr());
+  $('vm-art').value=v.art||'';
+  $('vm-cod').value=v.cod||'';
+  $('vm-costo').value=v.costo||'';
+  $('vm-prez').value=v.prez||'';
+  $('vm-qty').value=v.qty||1;
+  $('vm-iva').value=v.iva||0;
+  $('vm-ricond').value=v.ricond||'no';
+  $('vm-for').value=v.fid||'';
+  $('vm-pag').value=v.pag||'contanti';
+  $('vm-stato').value=v.stato||'nonpagato';
+  $('vm-acconto').value=v.acconto||'';
+  $('vm-note').value=v.note||'';
+  vmToggleAcconto();
+  // autocomplete cliente
+  if(v.cid){
+    const c=S.clienti.find(x=>x.id==v.cid);
+    if(c){ $('vm-cli-txt').value=c.nome+(c.ref?' ('+c.ref+')':''); $('vm-cli').value=v.cid; }
+  } else { $('vm-cli-txt').value=''; $('vm-cli').value=''; }
+  $('vm-modal').style.display='block';
+  $('vm-overlay').style.display='block';
+}
+function chiudiModalVendita(){
+  $('vm-modal').style.display='none';
+  $('vm-overlay').style.display='none';
+  $('vm-ac-list').classList.remove('open');
+}
+function vmToggleAcconto(){
+  $('vm-acc-wrap').classList.toggle('hidden',$('vm-stato').value!=='acconto');
+}
+function salvaModalVendita(){
+  const id=+$('vm-id').value;
+  const art=$('vm-art').value.trim(); if(!art)return alert('Inserisci articolo');
+  const fid=$('vm-for').value; if(!fid)return alert('⚠️ Seleziona un fornitore prima di continuare!');
+  const prez=parseFloat($('vm-prez').value)||0; if(prez<=0)return alert('Inserisci prezzo');
+  const cod=$('vm-cod').value.trim();
+  const costo=parseFloat($('vm-costo').value)||0;
+  const qty=parseInt($('vm-qty').value)||1;
+  const iva=parseInt($('vm-iva').value);
+  const ricond=$('vm-ricond').value;
+  const cid=$('vm-cli').value;
+  const pag=$('vm-pag').value;
+  const stato=$('vm-stato').value;
+  const acconto=stato==='acconto'?(parseFloat($('vm-acconto').value)||0):0;
+  const note=$('vm-note').value.trim();
+  const nuovaData=isoToIt($('vm-data').value||todayISO());
+  const f=S.fornitori.find(x=>x.id==fid);
+  const c=cid?S.clienti.find(x=>x.id==cid):null;
+  const totImp=prez*qty;
+  const ivaAmt=iva>0?parseFloat((totImp*iva/100).toFixed(2)):0;
+  const totLordo=parseFloat((totImp+ivaAmt).toFixed(2));
+  const totCosto=costo*qty;
+  const margine=parseFloat(((prez-costo)*qty).toFixed(2));
+  const idx=M().vendite.findIndex(x=>x.id===id); if(idx===-1)return;
+  const old=M().vendite[idx];
+  const nuovoPrezzoPagato=(stato==='pagato')?(old.prezzoPagato&&old.prezzoPagato!==old.totLordo?old.prezzoPagato:totLordo):(stato==='acconto'?old.prezzoPagato:0);
+  M().vendite[idx]={...old,data:nuovaData,cod,art,fid,fnome:f?f.nome:'',costo,prez,qty,iva,ivaAmt,totImp,totLordo,totCosto,margine,cid,cnome:c?c.nome:'contanti',pag,stato,acconto,ricond,note,prezzoPagato:nuovoPrezzoPagato};
+  chiudiModalVendita();
+  save();render();
+  // flash verde sulla riga
+  setTimeout(()=>{
+    document.querySelectorAll('#tbl-v tr').forEach(r=>{
+      if(r.innerHTML.includes(`apriModalVendita(${id})`)){
+        r.style.transition='background 0.3s'; r.style.background='var(--green2)';
+        setTimeout(()=>r.style.background='',1200);
+      }
+    });
+  },50);
+}
+// autocomplete nel modal vendita
+let vmAcIdx=-1;
+function vmAcFilter(){
+  const txt=$('vm-cli-txt').value.trim().toLowerCase();
+  const list=$('vm-ac-list'); vmAcIdx=-1;
+  if(!txt){list.innerHTML='';list.classList.remove('open');$('vm-cli').value='';return;}
+  const matches=S.clienti.filter(c=>(c.nome+' '+(c.ref||'')).toLowerCase().includes(txt)).slice(0,12);
+  if(!matches.length){list.innerHTML='<div class="ac-item" style="color:var(--text3)">Nessun risultato</div>';list.classList.add('open');return;}
+  list.innerHTML=matches.map(c=>`<div class="ac-item" data-id="${c.id}" data-label="${c.nome}${c.ref?' ('+c.ref+')':''}" onmousedown="vmAcScegli('${c.id}','${(c.nome+(c.ref?' ('+c.ref+')':'')).replace(/'/g,"\\'")}')"><div>${c.nome}</div>${c.ref||c.city?`<div class="ac-sub">${[c.ref,c.city].filter(Boolean).join(' · ')}</div>`:''}</div>`).join('');
+  list.classList.add('open');
+}
+function vmAcKey(e){
+  const list=$('vm-ac-list'); const items=list.querySelectorAll('.ac-item[data-id]'); if(!items.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();vmAcIdx=Math.min(vmAcIdx+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('selected',i===vmAcIdx));if(vmAcIdx>=0)items[vmAcIdx].scrollIntoView({block:'nearest'});}
+  else if(e.key==='ArrowUp'){e.preventDefault();vmAcIdx=Math.max(vmAcIdx-1,0);items.forEach((el,i)=>el.classList.toggle('selected',i===vmAcIdx));}
+  else if(e.key==='Enter'){e.preventDefault();if(vmAcIdx>=0&&items[vmAcIdx]){const el=items[vmAcIdx];vmAcScegli(el.dataset.id,el.dataset.label);}else if(items.length===1){const el=items[0];vmAcScegli(el.dataset.id,el.dataset.label);}}
+  else if(e.key==='Escape'){$('vm-ac-list').classList.remove('open');}
+}
+function vmAcScegli(id,label){$('vm-cli').value=id;$('vm-cli-txt').value=label;$('vm-ac-list').classList.remove('open');vmAcIdx=-1;}
+function vmAcBlur(){setTimeout(()=>$('vm-ac-list').classList.remove('open'),150);}
+
+let _fmCurrentId = null;
+
+function apriEditFornitoreCorrente(){
+  if(!_fmCurrentId) return;
+  apriEditFornitore(_fmCurrentId);
+}
+function apriEditFornitore(id){
+  const f=S.fornitori.find(x=>x.id===id); if(!f)return;
+  $('fe-id').value=id;
+  $('fe-nome').value=f.nome||'';
+  $('fe-tel').value=f.tel||'';
+  $('fe-iban').value=f.iban||'';
+  $('fe-creditore').value=f.creditore||'';
+  $('fe-modal').style.display='block';
+  $('fe-overlay').style.display='block';
+  $('fe-nome').focus();
+}
+function chiudiEditFornitore(){
+  $('fe-modal').style.display='none';
+  $('fe-overlay').style.display='none';
+}
+function salvaEditFornitore(){
+  const id=+$('fe-id').value;
+  const f=S.fornitori.find(x=>x.id===id); if(!f)return;
+  const nome=$('fe-nome').value.trim(); if(!nome)return alert('Inserisci il nome');
+  f.nome=nome; f.tel=$('fe-tel').value.trim(); f.iban=$('fe-iban').value.trim(); f.creditore=$('fe-creditore').value.trim().toUpperCase();
+  chiudiEditFornitore(); save(); render();
+  // aggiorna titolo nel resoconto se è ancora aperto
+  if($('fm-modal').style.display!=='none'){
+    $('fm-title').textContent=nome;
+    $('fm-subtitle').innerHTML=`${f.tel?'Tel: '+f.tel+' · ':''}${f.iban?'IBAN: '+f.iban:''}`;
+  }
+}
+
+function apriModalFornitore(id){
+  _fmCurrentId = id;
+  const f=S.fornitori.find(x=>x.id===id); if(!f)return;
+  const ms=getMese(meseAttivo);
+  const [y,m]=meseAttivo.split('-');
+  const nomeMese=`${MESI[+m-1]} ${y}`;
+
+  // Se il fornitore fa parte di un gruppo creditore → mostra scheda aggregata
+  if(f.creditore){
+    const gruppo=S.fornitori.filter(x=>x.creditore===f.creditore);
+
+    // somma tutti i saldi del gruppo
+    let totAcq=0,totPag=0,totAcc=0,totRes=0,totSaldo=0,totArt=0,totDV=0,totDVRes=0,totPagSuDV=0;
+    gruppo.forEach(gf=>{
+      const s=saldoFor(gf.id,meseAttivo);
+      totAcq+=s.acquistato; totPag+=s.pagato; totAcc+=s.acconti; totRes+=s.resi; totSaldo+=s.saldo;
+      totArt+=ms.vendite.filter(v=>v.fid==gf.id).length;
+      totDV+=s.debitoVecchio||0; totDVRes+=s.debitoVecchioResiduo||0; totPagSuDV+=s.pagSuDV||0;
+    });
+
+    $('fm-edit-btn').style.display='none'; // nascondi "Modifica dati" per la vista aggregata
+    $('fm-title').innerHTML=`${f.creditore} <span style="font-size:12px;font-weight:500;color:var(--teal);background:var(--teal2);padding:3px 10px;border-radius:20px;border:1px solid var(--teal);margin-left:8px">Gruppo creditore</span>`;
+    $('fm-subtitle').innerHTML=`Fornitori: <strong>${gruppo.map(x=>x.nome).join(', ')}</strong> &nbsp;·&nbsp; Mese: ${nomeMese}`;
+
+    $('fm-stats').innerHTML=`
+      <div class="metric m-blue"><div class="m-label">Articoli totali</div><div class="m-value blue">${totArt}</div></div>
+      <div class="metric m-red"><div class="m-label">Totale acquistato</div><div class="m-value red">${fmt(totAcq)}</div></div>
+      <div class="metric m-green"><div class="m-label">Già pagato</div><div class="m-value green">${fmt(totPag)}</div></div>
+      ${totPagSuDV>0?`<div class="metric m-purple"><div class="m-label">Di cui su debito vecchio</div><div class="m-value" style="color:var(--purple)">${fmt(totPagSuDV)}</div></div>`:''}
+      <div class="metric m-amber"><div class="m-label">Acconti dati</div><div class="m-value amber">${fmt(totAcc)}</div></div>
+      <div class="metric m-green"><div class="m-label">Resi scalati</div><div class="m-value green">${fmt(totRes)}</div></div>
+      ${totDV>0?`<div class="metric ${totDVRes>0?'m-red':'m-green'}" style="border:2px solid ${totDVRes>0?'var(--red3)':'var(--green3)'}"><div class="m-label">Debito vecchio residuo</div><div class="m-value ${totDVRes>0?'red':'green'}">${totDVRes>0?fmt(totDVRes):'✓ Saldato'}</div></div>`:''}
+      <div class="metric ${totSaldo>0?'m-red':'m-green'}"><div class="m-label">Saldo mese da pagare</div><div class="m-value ${totSaldo>0?'red':'green'}">${fmt(totSaldo)}</div></div>
+      ${totDV>0?`<div class="metric m-red" style="border:2px solid var(--red3)"><div class="m-label" style="font-size:11px;font-weight:800">TOTALE COMPLESSIVO</div><div class="m-value red" style="font-size:26px">${fmt(totSaldo+totDVRes)}</div></div>`:''}
+    `;
+
+    // articoli aggregati di tutti i fornitori del gruppo
+    const tutteVendite = gruppo.flatMap(gf=>ms.vendite.filter(v=>v.fid==gf.id).map(v=>({...v,_fnome:gf.nome})));
+    tutteVendite.sort((a,b)=>a.data.localeCompare(b.data));
+
+    $('fm-tbl').innerHTML=!tutteVendite.length
+      ?'<tr><td colspan="9" class="empty-row">Nessun articolo acquistato da questi fornitori questo mese</td></tr>'
+      :tutteVendite.map(v=>{
+        const sb={pagato:'b-green',acconto:'b-amber',nonpagato:'b-red'}[v.stato];
+        return`<tr>
+          <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${v.data}</td>
+          <td style="font-weight:600">${v.art}</td>
+          <td><code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);padding:2px 6px;border-radius:4px">${v.cod||'—'}</code></td>
+          <td>${fmt(v.costo)}</td>
+          <td style="text-align:center">${v.qty}</td>
+          <td style="font-weight:600;color:var(--red3)">${fmt(v.totCosto)}</td>
+          <td style="color:var(--accent3)">${v.cnome}</td>
+          <td><span class="badge b-gray" style="font-size:10px">${v._fnome}</span></td>
+          <td><span class="badge ${sb}">${v.stato==='acconto'?'Acc.'+fmt(v.acconto):v.stato}</span></td>
+        </tr>`;}).join('');
+
+    // aggiorna header tabella per aggiungere colonna fornitore
+    const thead=$('fm-tbl').closest('table').querySelector('thead tr');
+    thead.innerHTML='<th>Data</th><th>Articolo</th><th>Cod.</th><th>Costo unit.</th><th>Qtà</th><th>Totale costo</th><th>Venduto a</th><th>Fornitore</th><th>Stato</th>';
+
+    $('fm-modal').style.display='block';
+    $('fm-overlay').style.display='block';
+    return;
+  }
+
+  // Vista normale fornitore singolo
+  $('fm-edit-btn').style.display='';
+  $('fm-title').textContent=f.nome;
+  $('fm-subtitle').textContent=`${f.tel?'Tel: '+f.tel+' · ':''}${f.iban?'IBAN: '+f.iban+' · ':''}Mese: ${nomeMese}`;
+
+  const {acquistato,pagato,acconti,resi,saldo,debitoVecchio,debitoVecchioResiduo,pagSuDV,pagSuMese}=saldoFor(id,meseAttivo);
+  const venditeFor=ms.vendite.filter(v=>v.fid==id);
+  $('fm-stats').innerHTML=`
+    <div class="metric m-blue"><div class="m-label">Articoli acquistati</div><div class="m-value blue">${venditeFor.length}</div></div>
+    <div class="metric m-red"><div class="m-label">Totale acquistato</div><div class="m-value red">${fmt(acquistato)}</div></div>
+    <div class="metric m-green"><div class="m-label">Già pagato</div><div class="m-value green">${fmt(pagato)}</div></div>
+    ${pagSuDV>0?`<div class="metric m-purple"><div class="m-label">Di cui su debito vecchio</div><div class="m-value" style="color:var(--purple)">${fmt(pagSuDV)}</div></div>`:''}
+    <div class="metric m-amber"><div class="m-label">Acconti dati</div><div class="m-value amber">${fmt(acconti)}</div></div>
+    <div class="metric m-green"><div class="m-label">Resi scalati</div><div class="m-value green">${fmt(resi)}</div></div>
+    ${debitoVecchio>0?`<div class="metric ${debitoVecchioResiduo>0?'m-red':'m-green'}" style="border:2px solid ${debitoVecchioResiduo>0?'var(--red3)':'var(--green3)'}"><div class="m-label">Debito vecchio residuo</div><div class="m-value ${debitoVecchioResiduo>0?'red':'green'}">${debitoVecchioResiduo>0?fmt(debitoVecchioResiduo):'✓ Saldato'}</div></div>`:''}
+    <div class="metric ${saldo>0?'m-red':'m-green'}"><div class="m-label">Saldo mese da pagare</div><div class="m-value ${saldo>0?'red':'green'}">${fmt(saldo)}</div></div>
+  `;
+
+  // ripristina header tabella normale
+  const thead=$('fm-tbl').closest('table').querySelector('thead tr');
+  thead.innerHTML='<th>Data</th><th>Articolo</th><th>Cod.</th><th>Costo unit.</th><th>Qtà</th><th>Totale costo</th><th>Venduto a</th><th>Stato</th>';
+
+  $('fm-tbl').innerHTML=!venditeFor.length
+    ?'<tr><td colspan="8" class="empty-row">Nessun articolo acquistato da questo fornitore questo mese</td></tr>'
+    :venditeFor.map(v=>{
+      const sb={pagato:'b-green',acconto:'b-amber',nonpagato:'b-red'}[v.stato];
+      return`<tr>
+        <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${v.data}</td>
+        <td style="font-weight:600">${v.art}</td>
+        <td><code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);padding:2px 6px;border-radius:4px">${v.cod||'—'}</code></td>
+        <td>${fmt(v.costo)}</td>
+        <td style="text-align:center">${v.qty}</td>
+        <td style="font-weight:600;color:var(--red3)">${fmt(v.totCosto)}</td>
+        <td style="color:var(--accent3)">${v.cnome}</td>
+        <td><span class="badge ${sb}">${v.stato==='acconto'?'Acc.'+fmt(v.acconto):v.stato}</span></td>
+      </tr>`;}).join('');
+
+  $('fm-modal').style.display='block';
+  $('fm-overlay').style.display='block';
+}
+function chiudiModalFornitore(){
+  $('fm-modal').style.display='none';
+  $('fm-overlay').style.display='none';
+}
+
+function apriModalCliente(id){
+  const c=S.clienti.find(x=>x.id===id); if(!c)return;
+  $('cl-m-id').value=id;
+  $('cl-m-nome').value=c.nome||'';
+  $('cl-m-ref').value=c.ref||'';
+  $('cl-m-ind').value=c.ind||'';
+  $('cl-m-city').value=c.city||'';
+  $('cl-m-tel').value=c.tel||'';
+  $('cl-m-note').value=c.note||'';
+  $('cl-modal').style.display='block';
+  $('cl-modal-overlay').style.display='block';
+  $('cl-m-nome').focus();
+}
+function chiudiModalCliente(){
+  $('cl-modal').style.display='none';
+  $('cl-modal-overlay').style.display='none';
+}
+function salvaModalCliente(){
+  const id=+$('cl-m-id').value;
+  const c=S.clienti.find(x=>x.id===id); if(!c)return;
+  c.nome=$('cl-m-nome').value.trim()||c.nome;
+  c.ref=$('cl-m-ref').value.trim();
+  c.ind=$('cl-m-ind').value.trim();
+  c.city=$('cl-m-city').value.trim();
+  c.tel=$('cl-m-tel').value.trim();
+  c.note=$('cl-m-note').value.trim();
+  save(); render(); chiudiModalCliente();
+}
+
+function addFornitore(){ const n=$('f-nome').value.trim(); if(!n)return alert('Inserisci nome'); S.fornitori.push({id:Date.now(),nome:n,tel:$('f-tel').value.trim(),iban:$('f-iban').value.trim(),creditore:$('f-creditore').value.trim().toUpperCase()}); ['f-nome','f-tel','f-iban','f-creditore'].forEach(id=>$(id).value=''); save();render(); }
+function delFornitore(id){ if(!confirm('Elimina fornitore?'))return; S.fornitori=S.fornitori.filter(x=>x.id!==id); save();render(); }
+
+// ---- CLIENTI ----
+function addCliente(){ const n=$('cl-nome').value.trim(); if(!n)return alert('Inserisci almeno la ragione sociale'); S.clienti.push({id:Date.now(),nome:n,ref:$('cl-ref').value.trim(),tel:$('cl-tel').value.trim(),ind:$('cl-ind').value.trim(),city:$('cl-city').value.trim(),note:$('cl-note').value.trim()}); ['cl-nome','cl-ref','cl-tel','cl-ind','cl-city','cl-note'].forEach(id=>$(id).value=''); save();render(); }
+function delCliente(id){ if(!confirm('Elimina cliente?'))return; S.clienti=S.clienti.filter(x=>x.id!==id); save();render(); }
+function segnaCliPagato(id){ M().vendite.filter(v=>v.cid==id).forEach(v=>{if(v.stato!=='pagato')v.stato='pagato';}); save();render(); }
+function togglePagato(id){
+  const v=M().vendite.find(x=>x.id===id); if(!v)return;
+  const diventa = v.stato !== 'pagato';
+  v.stato = diventa ? 'pagato' : 'nonpagato';
+  if(diventa){ v.prezzoPagato = v.totLordo; v.socio = ''; }
+  else { v.prezzoPagato = 0; v.socio = ''; }
+  save();
+  aggiornaRigaVendita(id);
+  // se diventa pagato, mostra il select evidenziato e un messaggio
+  if(diventa){
+    setTimeout(()=>{
+      const righe = document.querySelectorAll('#tbl-v tr');
+      righe.forEach(r=>{ if(r.innerHTML.includes(`apriModalVendita(${id})`)){
+        const sel = r.querySelectorAll('td')[7]?.querySelector('select');
+        if(sel){ sel.style.border='2px solid var(--red3)'; sel.style.boxShadow='0 0 0 3px rgba(214,48,48,0.2)'; sel.focus(); }
+      }});
+    },50);
+  }
+}
+function setSocio(id, socio){
+  const v=M().vendite.find(x=>x.id===id); if(!v)return;
+  if(!socio){ alert('⚠️ Seleziona chi ha incassato!'); return; }
+  v.socio=socio;
+  // togli evidenziazione rossa dal select
+  const righe = document.querySelectorAll('#tbl-v tr');
+  righe.forEach(r=>{ if(r.innerHTML.includes(`apriModalVendita(${id})`)){
+    const sel = r.querySelectorAll('td')[7]?.querySelector('select');
+    if(sel){ sel.style.border=''; sel.style.boxShadow=''; }
+  }});
+  save();
+}
+function setPrezzoPagato(id, val){
+  const v=M().vendite.find(x=>x.id===id); if(!v)return;
+  v.prezzoPagato = parseFloat(val)||0;
+  save();
+}
+
+function aggiornaRigaVendita(id){
+  const v=M().vendite.find(x=>x.id===id); if(!v)return;
+  const isPagato = v.stato==='pagato';
+  const isAcconto = v.stato==='acconto';
+
+  // trova la riga cercando apriModalVendita con questo id
+  const righe = document.querySelectorAll('#tbl-v tr');
+  let riga = null;
+  righe.forEach(r=>{ if(r.innerHTML.includes(`apriModalVendita(${id})`)) riga=r; });
+  if(!riga) return;
+
+  const tds = riga.querySelectorAll('td');
+
+  // td[4] = prezzo da pagare: vuoto se pagato, manca se acconto, importo rosso se non pagato
+  if(isPagato){
+    tds[4].innerHTML = `<span style="font-weight:400;color:var(--text3);font-size:13px">—</span>`;
+  } else if(isAcconto){
+    tds[4].innerHTML = `<span style="font-size:10px;color:var(--amber3);font-weight:600">Manca</span><br><span style="font-weight:700;color:var(--red3);font-size:14px">${fmt(v.totLordo-(v.acconto||0))}</span>`;
+  } else {
+    tds[4].innerHTML = `<span style="font-weight:700;color:var(--red3);font-size:14px">${fmt(v.totLordo)}</span>`;
+  }
+
+  // td[5] = prezzo pagato: importo verde se pagato, acconto se acconto, — se non pagato
+  if(isPagato){
+    tds[5].innerHTML = `<span style="font-weight:700;color:var(--green3);font-size:14px">${fmt(v.prezzoPagato||v.totLordo)}</span>`;
+  } else if(isAcconto){
+    tds[5].innerHTML = `<span style="font-weight:700;color:var(--amber3);font-size:14px">${fmt(v.acconto||0)}</span>`;
+  } else {
+    tds[5].innerHTML = `<span style="font-weight:400;color:var(--text3);font-size:13px">—</span>`;
+  }
+
+  // td[6] = casella pagato
+  tds[6].innerHTML = isPagato
+    ? `<input type="checkbox" checked onchange="togglePagato(${v.id})" style="width:17px;height:17px;accent-color:var(--green3);cursor:pointer">`
+    : `<input type="checkbox" onchange="togglePagato(${v.id})" style="width:17px;height:17px;accent-color:var(--green3);cursor:pointer">`;
+
+  // td[7] = incassato da
+  if(isPagato || isAcconto){
+    const borderStyle = (isPagato && !v.socio) ? 'border:2px solid var(--red3);box-shadow:0 0 0 3px rgba(214,48,48,0.2)' : 'border:1px solid var(--border2)';
+    tds[7].innerHTML = `<select onchange="setSocio(${v.id},this.value)" style="${borderStyle};border-radius:5px;padding:3px 7px;font-size:12px;font-weight:600;color:var(--green3);background:var(--green2);cursor:pointer;outline:none">
+      <option value="" ${!v.socio?'selected':''}>— obbligatorio —</option>
+      <option value="Ciro" ${v.socio==='Ciro'?'selected':''}>Ciro</option>
+      <option value="Gigi" ${v.socio==='Gigi'?'selected':''}>Gigi</option>
+    </select>`;
+  } else {
+    tds[7].innerHTML = `<span style="color:var(--text3);font-size:12px">—</span>`;
+  }
+}
+
+// ---- VENDITE ----
+let _editingVenditaId = null;
+
+function svuotaCampiVendita(){
+  ['v-cod','v-art','v-costo','v-prez','v-note','v-acconto'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  $('v-qty').value='1';
+  $('v-data').value=todayISO();
+  $('v-for').value='';
+  $('v-iva').value='0';
+  $('v-ricond').value='';
+  $('v-pag').value='contanti';
+  $('v-stato').value='nonpagato';
+  $('acc-wrap').classList.add('hidden');
+  acReset();
+}
+
+function submitVendita(){
+  if(_editingVenditaId) salvaModificaVendita();
+  else addVendita();
+}
+
+function addVendita(){
+  const art=$('v-art').value.trim(); if(!art)return alert("Inserisci articolo");
+  const fid=$('v-for').value; if(!fid)return alert('⚠️ Seleziona un fornitore prima di continuare!');
+  const prez=parseFloat($('v-prez').value)||0; if(prez<=0)return alert("Inserisci prezzo vendita");
+  const cod=$('v-cod').value.trim(); const modello='';
+  const costo=parseFloat($('v-costo').value)||0;
+  const qty=parseInt($('v-qty').value)||1; const iva=parseInt($('v-iva').value);
+  const ricond=$('v-ricond').value; const cid=$('v-cli').value;
+  const pag=$('v-pag').value; const stato=$('v-stato').value;
+  const acconto=stato==='acconto'?(parseFloat($('v-acconto').value)||0):0;
+  const socio=$('v-socio').value; const note=$('v-note').value.trim();
+  const f=S.fornitori.find(x=>x.id==fid);
+
+  // fornitori che richiedono obbligatoriamente la selezione di ricondizionato
+  const fornitoriRicond = ['italerre','franco','di mauro','viciti','walter','rmg'];
+  if(f){
+    const nomeFor = f.nome.toLowerCase().trim();
+    const richiedeRicond = fornitoriRicond.some(fn => nomeFor.includes(fn));
+    if(richiedeRicond && (!ricond || ricond==='no' || ricond==='')){
+      return alert(`⚠️ Per il fornitore "${f.nome}" è obbligatorio specificare se l'articolo è ricondizionato.\n\nSeleziona una voce nel campo RICONDIZIONATO prima di procedere.`);
+    }
+  }
+
+  const c=cid?S.clienti.find(x=>x.id==cid):null;
+  const totImp=prez*qty; const ivaAmt=iva>0?parseFloat((totImp*iva/100).toFixed(2)):0;
+  const totLordo=parseFloat((totImp+ivaAmt).toFixed(2)); const totCosto=costo*qty;
+  const margine=parseFloat(((prez-costo)*qty).toFixed(2));
+  M().vendite.push({id:Date.now(),data:isoToIt($('v-data').value||todayISO()),cod,modello,art,fid,fnome:f?f.nome:'',costo,prez,qty,iva,ivaAmt,totImp,totLordo,totCosto,margine,cid,cnome:c?c.nome:'contanti',pag,stato,acconto,ricond,socio,note});
+  ['v-cod','v-art','v-costo','v-prez','v-note','v-acconto'].forEach(id=>$(id).value=''); $('v-qty').value='1';
+  $('v-data').value=todayISO();
+  acReset();
+  save();render();
+}
+
+function editVendita(id){
+  const v=M().vendite.find(x=>x.id===id); if(!v)return;
+  _editingVenditaId=id;
+  // Scorri su
+  $('sec-vendite').scrollIntoView({behavior:'smooth',block:'start'});
+  // Popola form
+  popolaSelects();
+  $('v-cod').value=v.cod||'';
+  $('v-art').value=v.art||'';
+  $('v-for').value=v.fid||'';
+  $('v-costo').value=v.costo||'';
+  $('v-prez').value=v.prez||'';
+  $('v-qty').value=v.qty||1;
+  $('v-iva').value=v.iva||0;
+  $('v-ricond').value=v.ricond||'no';
+  acSetValore(v.cid||'');
+  $('v-pag').value=v.pag||'contanti';
+  $('v-stato').value=v.stato||'pagato';
+  toggleAcconto();
+  $('v-acconto').value=v.acconto||'';
+  $('v-socio').value=v.socio||'Ciro';
+  $('v-note').value=v.note||'';
+  // UI feedback
+  $('v-form-title').textContent='Modifica vendita';
+  $('v-form-title').style.color='var(--amber)';
+  $('v-submit-btn').textContent='Salva modifiche';
+  $('v-submit-btn').style.background='var(--amber)';
+  $('v-submit-btn').style.borderColor='var(--amber)';
+  $('v-submit-btn').style.color='#fff';
+  $('v-cancel-btn').style.display='inline-block';
+  $('v-edit-banner').classList.add('visible');
+  // Evidenzia la riga in tabella
+  document.querySelectorAll('#tbl-v tr').forEach(r=>r.style.background='');
+  const rows=document.querySelectorAll('#tbl-v tr');
+  rows.forEach(r=>{if(r.innerHTML.includes(`editVendita(${id})`))r.style.background='var(--amber2)';});
+}
+
+function salvaModificaVendita(){
+  const id=_editingVenditaId;
+  const art=$('v-art').value.trim(); if(!art)return alert("Inserisci articolo");
+  const fid=$('v-for').value; if(!fid)return alert('⚠️ Seleziona un fornitore prima di continuare!');
+  const prez=parseFloat($('v-prez').value)||0; if(prez<=0)return alert("Inserisci prezzo vendita");
+  const cod=$('v-cod').value.trim(); const modello=''; const costo=parseFloat($('v-costo').value)||0;
+  const qty=parseInt($('v-qty').value)||1; const iva=parseInt($('v-iva').value);
+  const ricond=$('v-ricond').value; const cid=$('v-cli').value;
+  const pag=$('v-pag').value; const stato=$('v-stato').value;
+  const acconto=stato==='acconto'?(parseFloat($('v-acconto').value)||0):0;
+  const socio=$('v-socio').value; const note=$('v-note').value.trim();
+  const f=S.fornitori.find(x=>x.id==fid); const c=cid?S.clienti.find(x=>x.id==cid):null;
+  const totImp=prez*qty; const ivaAmt=iva>0?parseFloat((totImp*iva/100).toFixed(2)):0;
+  const totLordo=parseFloat((totImp+ivaAmt).toFixed(2)); const totCosto=costo*qty;
+  const margine=parseFloat(((prez-costo)*qty).toFixed(2));
+  const idx=M().vendite.findIndex(x=>x.id===id); if(idx===-1)return;
+  const old=M().vendite[idx];
+  // se era già pagato e non aveva un prezzo pagato diverso manualmente, aggiorna con il nuovo totale
+  const nuovoPrezzoPagato = (stato==='pagato')
+    ? (old.prezzoPagato && old.prezzoPagato !== old.totLordo ? old.prezzoPagato : totLordo)
+    : (stato==='acconto' ? old.prezzoPagato : 0);
+  M().vendite[idx]={...old,cod,modello,art,fid,fnome:f?f.nome:'',costo,prez,qty,iva,ivaAmt,totImp,totLordo,totCosto,margine,cid,cnome:c?c.nome:'contanti',pag,stato,acconto,ricond,socio,note,prezzoPagato:nuovoPrezzoPagato};
+  cancelEditVendita();
+  save();render();
+  // evidenzia brevemente la riga aggiornata
+  setTimeout(()=>{
+    document.querySelectorAll('#tbl-v tr').forEach(r=>{
+      if(r.innerHTML.includes(`editVendita(${id})`)){
+        r.style.transition='background 0.3s';
+        r.style.background='var(--green2)';
+        setTimeout(()=>{ r.style.background=''; },1200);
+      }
+    });
+  },50);
+}
+
+function cancelEditVendita(){
+  _editingVenditaId=null;
+  ['v-cod','v-art','v-costo','v-prez','v-note','v-acconto'].forEach(id=>$(id).value='');
+  if($('v-data')) $('v-data').value=todayISO();
+  acReset();
+  $('v-qty').value='1';
+  $('v-form-title').textContent='Nuova vendita';
+  $('v-form-title').style.color='';
+  $('v-submit-btn').textContent='+ Registra vendita';
+  $('v-submit-btn').style.background='';
+  $('v-submit-btn').style.borderColor='';
+  $('v-submit-btn').style.color='';
+  $('v-cancel-btn').style.display='none';
+  $('v-edit-banner').classList.remove('visible');
+  $('acc-wrap').classList.add('hidden');
+  document.querySelectorAll('#tbl-v tr').forEach(r=>r.style.background='');
+}
+function delVendita(id){ if(!confirm('Eliminare questa vendita?'))return; M().vendite=M().vendite.filter(x=>x.id!==id); save();render(); }
+
+// ---- SPESE ----
+function addUscita(){
+  const cat=$('u-cat').value;
+  const imp=parseFloat($('u-imp').value)||0;
+  const socio=$('u-socio').value;
+  const pag=$('u-pag').value;
+  const fid=cat==='fornitore'?$('u-for').value:'';
+
+  // raccoglie tutti i campi mancanti
+  const mancanti=[];
+  if(!cat) mancanti.push('• Spesa');
+  if(cat==='fornitore'&&!fid) mancanti.push('• Fornitore');
+  if(imp<=0) mancanti.push('• Importo €');
+  if(!socio) mancanti.push('• Pagato da');
+
+  if(mancanti.length>0){
+    alert('⚠️ Completa i seguenti campi prima di registrare:\n\n' + mancanti.join('\n'));
+    return;
+  }
+
+  const f=fid?S.fornitori.find(x=>x.id==fid):null;
+  const fnome=f?f.nome:'';
+  const labs={fornitore:'Pag. fornitore',stipendio_carmen:'Stipendio Carmen',benzina:'Benzina',beppe:'Compenso Beppe',altro:'Altro'};
+  M().uscite.push({id:Date.now(),data:isoToIt($('u-data').value||todayISO()),cat,label:labs[cat]+(fnome?' – '+fnome:''),imp,pag,desc:'',fid,socio});
+  $('u-imp').value=''; $('u-data').value=todayISO(); $('u-socio').value=''; $('u-cat').value=''; save();render();
+}
+function delUscita(id){ M().uscite=M().uscite.filter(x=>x.id!==id); save();render(); }
+
+// ---- RESI ----
+function addReso(){
+  const desc=$('r-desc').value.trim(); if(!desc)return alert('Inserisci descrizione');
+  const fid=$('r-for').value; if(!fid)return alert('⚠️ Seleziona un fornitore prima di continuare!');
+  const cod=$('r-cod').value.trim(); const val=parseFloat($('r-val').value)||0;
+  const qty=parseInt($('r-qty').value)||1; const tipo=$('r-tipo').value; const note=$('r-note').value.trim();
+  const f=S.fornitori.find(x=>x.id==fid); const tot=val*qty;
+  const effs={ricondizionato:'Scalato dal debito fornitore',garanzia:'Garanzia OK – scalato',nogaranzia:'No garanzia – aggiunto al nostro debito'};
+  M().resi.push({id:Date.now(),data:isoToIt($('r-data').value||todayISO()),meseKey:meseAttivo,cod,desc,fid,fnome:f?f.nome:'',val,qty,tot,tipo,effetto:effs[tipo],note,ritiratoDaCliente:false,restituitoAlFornitore:false,clienteVendita:''});
+  ['r-cod','r-desc','r-val','r-note'].forEach(id=>$(id).value=''); $('r-qty').value='1'; $('r-data').value=todayISO(); save();render();
+}
+function delReso(id){ M().resi=M().resi.filter(x=>x.id!==id); save();render(); }
+function toggleResoCheck(meseKey,id,campo){
+  const ms=getMese(meseKey);
+  const r=ms.resi.find(x=>x.id==id); if(!r)return;
+  r[campo]=!r[campo];
+  save(); renderRitiri();
+}
+
+// ---- ACCONTI ----
+function addAcconto(){
+  const dir=$('a-dir').value; const imp=parseFloat($('a-imp').value)||0; if(imp<=0)return alert('Inserisci importo');
+  const pag=$('a-pag').value; const note=$('a-note').value.trim();
+  let nome='',id2='';
+  if(dir==='dafornitore'){ id2=$('a-for').value; const f=S.fornitori.find(x=>x.id==id2); if(!f)return alert('⚠️ Seleziona un fornitore prima di continuare!'); nome=f.nome; }
+  else{ id2=$('a-cli').value; const c=S.clienti.find(x=>x.id==id2); if(!c)return alert('Seleziona cliente'); nome=c.nome; }
+  M().acconti.push({id:Date.now(),data:isoToIt($('a-data').value||todayISO()),dir,nome,id2,imp,pag,note});
+  $('a-imp').value=''; $('a-note').value=''; $('a-data').value=todayISO(); save();render();
+}
+function delAcconto(id){ M().acconti=M().acconti.filter(x=>x.id!==id); save();render(); }
+
+// ---- RENDER TABELLE ----
+function render(){
+  popolaSelects();
+  const ms=M();
+
+  // vendite
+  $('tbl-v').innerHTML=!ms.vendite.length?'<tr><td colspan="10" class="empty-row">Nessuna vendita registrata questo mese</td></tr>':
+    ms.vendite.map(v=>{
+      const isPagato = v.stato==='pagato';
+      const isAcconto = v.stato==='acconto';
+      // colonna prezzo da pagare: vuoto se pagato, manca+resto se acconto, importo rosso se non pagato
+      const prezzoHtml = isPagato
+        ? `<span style="font-weight:400;color:var(--text3);font-size:13px">—</span>`
+        : isAcconto
+        ? `<span style="font-size:10px;color:var(--amber3);font-weight:600">Manca</span><br><span style="font-weight:700;color:var(--red3);font-size:14px">${fmt(v.totLordo - (v.acconto||0))}</span>`
+        : `<span style="font-weight:700;color:var(--red3);font-size:14px">${fmt(v.totLordo)}</span>`;
+
+      // colonna prezzo pagato: importo verde se pagato, acconto in arancio, — se non pagato
+      const prezzoPagatoHtml = isPagato
+        ? `<span style="font-weight:700;color:var(--green3);font-size:14px">${fmt(v.prezzoPagato||v.totLordo)}</span>`
+        : isAcconto
+        ? `<span style="font-weight:700;color:var(--amber3);font-size:14px">${fmt(v.acconto||0)}</span>`
+        : `<span style="font-weight:400;color:var(--text3);font-size:13px">—</span>`;
+      // casella spunta pagato
+      const checkHtml = isPagato
+        ? `<input type="checkbox" checked onchange="togglePagato(${v.id})" style="width:17px;height:17px;accent-color:var(--green3);cursor:pointer">`
+        : `<input type="checkbox" onchange="togglePagato(${v.id})" style="width:17px;height:17px;accent-color:var(--green3);cursor:pointer">`;
+      // select incassato da — inline nella cella
+      const borderStyle = (isPagato && !v.socio) ? 'border:2px solid var(--red3);box-shadow:0 0 0 3px rgba(214,48,48,0.2)' : 'border:1px solid var(--border2)';
+      const socioSelect = isPagato || isAcconto
+        ? `<select onchange="setSocio(${v.id},this.value)" style="${borderStyle};border-radius:5px;padding:3px 7px;font-size:12px;font-weight:600;color:var(--green3);background:var(--green2);cursor:pointer;outline:none">
+            <option value="" ${!v.socio?'selected':''}>— obbligatorio —</option>
+            <option value="Ciro" ${v.socio==='Ciro'?'selected':''}>Ciro</option>
+            <option value="Gigi" ${v.socio==='Gigi'?'selected':''}>Gigi</option>
+          </select>`
+        : `<span style="color:var(--text3);font-size:12px">—</span>`;
+      return`<tr>
+        <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${v.data}</td>
+        <td style="font-weight:600;color:var(--accent3);cursor:pointer;text-decoration:underline dotted" onclick="apriModalVendita(${v.id})" title="Clicca per modificare">${v.cnome}</td>
+        <td>${v.art}</td>
+        <td><code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);padding:2px 6px;border-radius:4px">${v.cod||'—'}</code></td>
+        <td>${prezzoHtml}</td>
+        <td>${prezzoPagatoHtml}</td>
+        <td style="text-align:center">${checkHtml}</td>
+        <td>${socioSelect}</td>
+        <td style="color:var(--text2);font-weight:600">${fmt(v.totCosto)}</td>
+        <td class="tbl-azioni">
+          <button class="btn danger" style="padding:3px 10px;font-size:13px;font-weight:700" onclick="delVendita(${v.id})">✕</button>
+        </td>
+      </tr>`;}).join('');
+
+  // tabella guadagno netto
+  const tg=$('tbl-guadagno');
+  if(!ms.vendite.length){
+    tg.innerHTML='<tr><td colspan="2" style="text-align:center;padding:8px;font-size:11px;color:var(--text3)">—</td></tr>';
+    $('guadagno-totale').textContent='€ 0.00';
+  } else {
+    let totGuadagno=0;
+    tg.innerHTML=ms.vendite.map(v=>{
+      const g=v.margine||0;
+      totGuadagno+=g;
+      return`<tr>
+        <td style="font-size:11px;padding:4px 7px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.art}">${v.art}</td>
+        <td style="font-size:12px;font-weight:700;padding:4px 7px;color:${g>=0?'var(--green3)':'var(--red3)'};text-align:right">${fmt(g)}</td>
+      </tr>`;}).join('');
+    $('guadagno-totale').textContent=fmt(totGuadagno);
+    $('guadagno-totale').style.color=totGuadagno>=0?'var(--green3)':'var(--red3)';
+  }
+
+  // spese
+  const cc={fornitore:'b-red',stipendio_carmen:'b-pink',benzina:'b-amber',beppe:'b-blue',altro:'b-gray'};
+  $('tbl-u').innerHTML=!ms.uscite.length?'<tr><td colspan="6" class="empty-row">Nessuna spesa questo mese</td></tr>':
+    ms.uscite.map(u=>`<tr>
+      <td style="font-size:11px;white-space:nowrap">${u.data}</td>
+      <td><span class="badge ${cc[u.cat]||'b-gray'}" style="cursor:pointer" onclick="apriModalUscita(${u.id})" title="Clicca per modificare">${u.label}</span></td>
+      <td style="font-weight:600;color:var(--red)">${fmt(u.imp)}</td>
+      <td><span class="badge ${u.pag==='contanti'?'b-gray':'b-blue'}">${u.pag}</span></td>
+      <td><span class="badge ${u.socio==='Ciro'?'b-green':u.socio==='Gigi'?'b-blue':'b-gray'}">${u.socio||'—'}</span></td>
+      <td style="display:flex;gap:5px">
+        <button class="btn edit" style="padding:3px 8px;font-size:11px" onclick="apriModalUscita(${u.id})">Modifica</button>
+        <button class="btn danger" style="padding:3px 8px;font-size:11px" onclick="delUscita(${u.id})">✕</button>
+      </td>
+    </tr>`).join('');
+
+  // resi
+  const tc={ricondizionato:'b-amber',garanzia:'b-green',nogaranzia:'b-red',automatico:'b-pink'};
+  const tl={ricondizionato:'Ricondizionato',garanzia:'Garanzia OK',nogaranzia:'No garanzia',automatico:'Da ritirare'};
+
+  // resi manuali + ricondizionati dalle vendite (aggiunti automaticamente)
+  const resiManuali = ms.resi.map(r=>({...r, _fonte:'manuale'}));
+  const resiAutomatic = ms.vendite
+    .filter(v=>v.ricond==='si')
+    .filter(v=>!ms.resi.some(r=>r._vendId===v.id)) // evita duplicati se già registrato
+    .map(v=>({
+      id:'auto_'+v.id, _vendId:v.id, _fonte:'automatico',
+      data:v.data, cod:v.cod||'—', desc:v.art,
+      fnome:v.fnome, val:v.prez, qty:v.qty, tot:v.totLordo,
+      tipo:'automatico', effetto:'Da ritirare dal cliente e restituire al fornitore',
+      note:'Generato automaticamente dalla vendita',
+      ritiratoDaCliente:v.ritiroStato?.ritiratoDaCliente||false,
+      restituitoAlFornitore:v.ritiroStato?.restituitoAlFornitore||false,
+      cnome:v.cnome
+    }));
+
+  const tuttiResi = [...resiManuali, ...resiAutomatic];
+
+  $('tbl-r').innerHTML=!tuttiResi.length?'<tr><td colspan="12" class="empty-row">Nessun reso questo mese</td></tr>':
+    tuttiResi.map(r=>{
+      const isAuto = r._fonte==='automatico';
+      const rowStyle = isAuto ? 'background:var(--pink2)' : '';
+      return`<tr style="${rowStyle}">
+        <td style="font-size:11px;white-space:nowrap">${r.data}</td>
+        <td><code style="font-family:'DM Mono',monospace;font-size:11px">${r.cod||'—'}</code></td>
+        <td style="font-weight:${isAuto?'600':'400'}">${r.desc}${isAuto?` <span style="font-size:10px;color:var(--pink)">(vendita)</span>`:''}</td>
+        <td>${r.fnome}</td>
+        ${isAuto?`<td style="font-size:11px;color:var(--text2)">${r.cnome}</td>`:'<td>—</td>'}
+        <td>${fmt(r.val)}</td><td>${r.qty}</td>
+        <td style="font-weight:600">${fmt(r.tot)}</td>
+        <td><span class="badge ${tc[r.tipo]||'b-gray'}">${tl[r.tipo]||r.tipo}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${r.effetto}</td>
+        <td style="font-size:11px">
+          ${isAuto?`<span class="badge ${r.ritiratoDaCliente?'b-green':'b-red'}">${r.ritiratoDaCliente?'Ritirato':'Da ritirare'}</span>`:r.note||'—'}
+        </td>
+        <td style="display:flex;gap:4px;justify-content:flex-end">
+          <button class="btn edit" style="padding:3px 8px;font-size:11px" onclick="T('ritiri')">Ritiri</button>
+          ${!isAuto?`<button class="btn danger" style="padding:3px 8px;font-size:11px" onclick="delReso(${r.id})">Elimina</button>`:''}
+        </td>
+      </tr>`;}).join('');
+
+  // acconti
+  $('tbl-a').innerHTML=!ms.acconti.length?'<tr><td colspan="7" class="empty-row">Nessun acconto questo mese</td></tr>':
+    ms.acconti.map(a=>`<tr>
+      <td style="font-size:11px;white-space:nowrap">${a.data}</td>
+      <td><span class="badge ${a.dir==='dafornitore'?'b-red':'b-green'}">${a.dir==='dafornitore'?'Da noi a fornitore':'Da cliente a noi'}</span></td>
+      <td>${a.nome}</td><td style="font-weight:600">${fmt(a.imp)}</td>
+      <td><span class="badge ${a.pag==='contanti'?'b-gray':'b-blue'}">${a.pag}</span></td>
+      <td>${a.note||'—'}</td>
+      <td><button class="btn danger" onclick="delAcconto(${a.id})">✕</button></td>
+    </tr>`).join('');
+
+  // clienti
+  $('tbl-cl').innerHTML=!S.clienti.length?'<tr><td colspan="10" class="empty-row">Nessun cliente</td></tr>':
+    S.clienti.map(c=>{ const {dovuto,acconti,saldo}=saldoCli(c.id,meseAttivo); return`<tr>
+      <td style="font-weight:600;color:var(--accent3);cursor:pointer;text-decoration:underline dotted" onclick="apriModalCliente(${c.id})" title="Clicca per modificare">${c.nome}</td>
+      <td style="font-size:12px">${c.ref||'—'}</td>
+      <td style="font-size:12px">${c.ind||'—'}</td>
+      <td style="font-size:12px">${c.city||'—'}</td>
+      <td>${c.tel||'—'}</td>
+      <td>${fmt(dovuto)}</td><td>${fmt(acconti)}</td>
+      <td style="font-weight:600;color:${saldo>0?'var(--red)':'var(--accent)'}">${fmt(saldo)}</td>
+      <td><span class="badge ${saldo>0?'b-red':'b-green'}">${saldo>0?'Deve pagare':'In pari'}</span></td>
+      <td style="display:flex;gap:6px">
+        ${saldo>0?`<button class="btn success" onclick="segnaCliPagato(${c.id})">Pagato ✓</button>`:''}
+        <button class="btn danger" onclick="delCliente(${c.id})">✕</button>
+      </td>
+    </tr>`; }).join('');
+
+  // fornitori
+  $('tbl-f').innerHTML=!S.fornitori.length?'<tr><td colspan="10" class="empty-row">Nessun fornitore</td></tr>':
+    S.fornitori.map(f=>{ const {acquistato,pagato,acconti,resi,saldo,debitoVecchio,debitoVecchioResiduo,pagSuDV}=saldoFor(f.id,meseAttivo);
+      const dvKey = `dv_${f.id}_${meseAttivo}`;
+      const dvVal = (S.debitiVecchi && S.debitiVecchi[dvKey]) ? S.debitiVecchi[dvKey] : '';
+      const credBadge = f.creditore ? `<span class="badge b-teal" style="background:var(--teal2);color:var(--teal);border:1px solid var(--teal);font-size:11px">${f.creditore}</span>` : '<span style="color:var(--text3);font-size:12px">—</span>';
+      const dvCell = debitoVecchio>0
+        ? `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">
+            <span style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:${debitoVecchioResiduo>0?'var(--purple)':'var(--green3)'}">
+              ${debitoVecchioResiduo>0 ? fmt(debitoVecchioResiduo) : '✓ Saldato'}
+            </span>
+            ${pagSuDV>0?`<span style="font-size:10px;color:var(--green3);font-weight:600">Pagato: ${fmt(pagSuDV)}</span>`:''}
+            <button onclick="editDebitoVecchio(${f.id},'${meseAttivo}')" class="btn" style="padding:2px 7px;font-size:10px;margin-top:2px;color:var(--purple);border-color:var(--purple)">✏ modifica</button>
+           </div>`
+        : `<button onclick="editDebitoVecchio(${f.id},'${meseAttivo}')" class="btn" style="padding:3px 9px;font-size:11px;color:var(--purple);border-color:var(--purple)">+ Inserisci</button>`;
+      return`<tr>
+        <td style="font-weight:600;color:var(--accent3);cursor:pointer;text-decoration:underline dotted" onclick="apriModalFornitore(${f.id})" title="Clicca per il resoconto">${f.nome}</td>
+        <td>${credBadge}</td>
+        <td>${f.tel||'—'}</td>
+        <td>${fmt(acquistato)}</td><td>${fmt(pagato)}</td><td>${fmt(acconti)}</td><td>${fmt(resi)}</td>
+        <td style="font-weight:600;color:${saldo>0?'var(--red)':'var(--accent)'}">${fmt(saldo)}</td>
+        <td style="background:var(--purple2)">${dvCell}</td>
+        <td><button class="btn danger" onclick="delFornitore(${f.id})">✕</button></td>
+      </tr>`;}).join('');
+}
+
+// ---- CALCOLA TOTALI MESE ----
+function calcolaMese(k){
+  const ms=getMese(k);
+  const venPagate=ms.vendite.filter(v=>v.stato==='pagato').reduce((s,v)=>s+v.totLordo,0);
+  const venAcc=ms.vendite.reduce((s,v)=>s+(v.stato==='acconto'?v.acconto:0),0);
+  const totUsc=ms.uscite.reduce((s,u)=>s+u.imp,0);
+  const ivaRisc=ms.vendite.filter(v=>v.iva>0&&v.stato==='pagato').reduce((s,v)=>s+v.ivaAmt,0);
+  const totMarg=ms.vendite.reduce((s,v)=>s+v.margine,0);
+  const accCli=ms.acconti.filter(a=>a.dir==='dacliente').reduce((s,a)=>s+a.imp,0);
+  const accFor=ms.acconti.filter(a=>a.dir==='dafornitore').reduce((s,a)=>s+a.imp,0);
+  const cassa=venPagate+venAcc+accCli-totUsc-accFor;
+  return {venPagate,venAcc,totUsc,ivaRisc,totMarg,accCli,accFor,cassa,nV:ms.vendite.length};
+}
+
+function renderRiepilogoIn(k,idMet,idCiro,idGigi,idFor,idCli,idRic){
+  const ms=getMese(k);
+  const {venPagate,venAcc,totUsc,ivaRisc,totMarg,accCli,accFor,cassa,nV}=calcolaMese(k);
+  $(idMet).innerHTML=`
+    <div class="metric m-green"><div class="m-label">Incassato vendite</div><div class="m-value green">${fmt(venPagate)}</div></div>
+    <div class="metric m-amber"><div class="m-label">Acconti ricevuti</div><div class="m-value amber">${fmt(venAcc+accCli)}</div></div>
+    <div class="metric m-green"><div class="m-label">Margine lordo</div><div class="m-value ${totMarg>=0?'green':'red'}">${fmt(totMarg)}</div></div>
+    <div class="metric m-purple"><div class="m-label">IVA riscossa</div><div class="m-value amber">${fmt(ivaRisc)}</div></div>
+    <div class="metric m-red"><div class="m-label">Spese totali</div><div class="m-value red">${fmt(totUsc)}</div></div>
+    <div class="metric m-red"><div class="m-label">Acconti a fornitori</div><div class="m-value red">${fmt(accFor)}</div></div>
+    <div class="metric m-blue"><div class="m-label">Cassa disponibile</div><div class="m-value blue">${fmt(cassa)}</div></div>
+    <div class="metric"><div class="m-label">N. vendite</div><div class="m-value">${nV}</div></div>
+  `;
+  function socHtml(nome,col){
+    const oggi=todayStr();
+    // incassato da vendite di questo socio
+    const mv=ms.vendite.filter(v=>v.socio===nome);
+    const inc=mv.filter(v=>v.stato==='pagato').reduce((s,v)=>s+v.totLordo,0);
+    const acc=mv.reduce((s,v)=>s+(v.stato==='acconto'?v.acconto:0),0);
+
+    // guadagno (margine) = margine TOTALE di tutte le vendite del mese ÷ 2 per socio
+    const margTotMese=ms.vendite.reduce((s,v)=>s+v.margine,0);
+    const guadagnoMensile=margTotMese/2;
+
+    // guadagno giornaliero = margine delle vendite di OGGI ÷ 2
+    const margOggi=ms.vendite.filter(v=>v.data===oggi).reduce((s,v)=>s+v.margine,0);
+    const guadagnoGiornaliero=margOggi/2;
+
+    // spese: personali + condivise 50%
+    const uscSocio=ms.uscite.filter(u=>u.socio===nome).reduce((s,u)=>s+u.imp,0);
+    const uscCondivise=ms.uscite.filter(u=>!u.socio||u.socio==='Entrambi').reduce((s,u)=>s+u.imp,0)/2;
+    const totDetratto=uscSocio+uscCondivise;
+    const inMano=inc+acc-totDetratto;
+
+    return`<div class="metrics-grid">
+      <div class="metric m-green"><div class="m-label">Incassato</div><div class="m-value ${col}">${fmt(inc)}</div></div>
+      <div class="metric m-green"><div class="m-label">Guadagno (50% margine)</div><div class="m-value ${guadagnoMensile>=0?col:'red'}">${fmt(guadagnoMensile)}</div></div>
+      <div class="metric m-amber"><div class="m-label">Guadagno giornaliero</div><div class="m-value ${guadagnoGiornaliero>=0?'amber':'red'}">${fmt(guadagnoGiornaliero)}</div></div>
+      <div class="metric m-purple"><div class="m-label">Guadagno mensile</div><div class="m-value ${guadagnoMensile>=0?'green':'red'}">${fmt(guadagnoMensile)}</div></div>
+      <div class="metric m-blue"><div class="m-label">In mano</div><div class="m-value ${inMano>=0?'blue':'red'}">${fmt(inMano)}</div></div>
+    </div>
+    <div style="margin-top:8px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);font-size:11px;color:var(--text2);line-height:1.7">
+      Spese personali: <strong style="color:var(--red)">${fmt(uscSocio)}</strong> &nbsp;|&nbsp;
+      Spese condivise (50%): <strong style="color:var(--red)">${fmt(uscCondivise)}</strong> &nbsp;|&nbsp;
+      Totale detratto: <strong style="color:var(--red)">${fmt(totDetratto)}</strong><br>
+      In mano = Incassato <strong>${fmt(inc+acc)}</strong> − Spese <strong>${fmt(totDetratto)}</strong>
+    </div>`;
+  }
+  $(idCiro).innerHTML=socHtml('Ciro','green');
+  $(idGigi).innerHTML=socHtml('Gigi','blue');
+  const fd=S.fornitori.filter(f=>saldoFor(f.id,k).saldo>0);
+  $(idFor).innerHTML=fd.length?fd.map(f=>`<div class="saldo-row"><span>${f.nome}</span><span style="font-weight:600;color:var(--red)">${fmt(saldoFor(f.id,k).saldo)}</span></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">Nessun debito</p>';
+  const cd=S.clienti.filter(c=>saldoCli(c.id,k).saldo>0);
+  $(idCli).innerHTML=cd.length?cd.map(c=>`<div class="saldo-row"><span>${c.nome}</span><span style="font-weight:600;color:var(--red)">${fmt(saldoCli(c.id,k).saldo)}</span></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">Nessun credito aperto</p>';
+  const ric=ms.vendite.filter(v=>v.ricond==='si');
+  $(idRic).innerHTML=ric.length?ric.map(v=>`<div class="ricond-item"><span>[${v.cod||'—'}] <strong>${v.art}</strong> – ${v.cnome}</span><span class="badge b-pink">da ritirare</span></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">Nessun articolo</p>';
+}
+
+// ---- SOLDI IN MANO AI SOCI ----
+function renderSoldiInMano(){
+  const ms = getMese(meseAttivo);
+  const [y,m] = meseAttivo.split('-');
+  const nomeMese = `${MESI[+m-1]} ${y}`;
+
+  // --- calcoli comuni ---
+  // incassato totale (vendite pagate + acconti ricevuti da clienti)
+  const incassatoCiro = ms.vendite.filter(v=>v.stato==='pagato'&&v.socio==='Ciro').reduce((s,v)=>s+v.totLordo,0)
+    + ms.vendite.filter(v=>v.stato==='acconto'&&v.socio==='Ciro').reduce((s,v)=>s+v.acconto,0);
+  const incassatoGigi = ms.vendite.filter(v=>v.stato==='pagato'&&v.socio==='Gigi').reduce((s,v)=>s+v.totLordo,0)
+    + ms.vendite.filter(v=>v.stato==='acconto'&&v.socio==='Gigi').reduce((s,v)=>s+v.acconto,0);
+
+  // spese pagate da ciascun socio
+  const speseCiro = ms.uscite.filter(u=>u.socio==='Ciro').reduce((s,u)=>s+u.imp,0)
+    + ms.uscite.filter(u=>!u.socio||u.socio==='Entrambi').reduce((s,u)=>s+u.imp,0)/2;
+  const speseGigi = ms.uscite.filter(u=>u.socio==='Gigi').reduce((s,u)=>s+u.imp,0)
+    + ms.uscite.filter(u=>!u.socio||u.socio==='Entrambi').reduce((s,u)=>s+u.imp,0)/2;
+
+  // guadagno a testa = 50% del margine totale di tutte le vendite
+  const margTotale = ms.vendite.reduce((s,v)=>s+v.margine,0);
+  const guadagnoATesta = margTotale / 2;
+
+  // soldi in mano = incassato - spese pagate - guadagno a testa
+  const inManoCiro = incassatoCiro - speseCiro - guadagnoATesta;
+  const inManoGigi = incassatoGigi - speseGigi - guadagnoATesta;
+  const totale = inManoCiro + inManoGigi;
+
+  function bloccoSocio(nome, incassato, spese, guadagno, inMano, colorClass){
+    return `
+      <div class="metrics-grid" style="margin-bottom:.8rem">
+        <div class="metric m-green"><div class="m-label">Incassato</div><div class="m-value ${colorClass}">${fmt(incassato)}</div></div>
+        <div class="metric m-red"><div class="m-label">Spese pagate</div><div class="m-value red">${fmt(spese)}</div></div>
+        <div class="metric m-amber"><div class="m-label">Guadagno a testa</div><div class="m-value amber">${fmt(guadagno)}</div></div>
+      </div>
+      <div style="padding:14px 16px;border-radius:var(--radius-sm);background:${inMano>=0?'var(--accent2)':'var(--red2)'};border:1.5px solid ${inMano>=0?'#a8d9bc':'#F0B0B0'}">
+        <div style="font-size:11px;font-weight:700;color:${inMano>=0?'var(--green3)':'var(--red3)'};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Soldi in mano</div>
+        <div style="font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:${inMano>=0?'var(--green3)':'var(--red3)'}">${fmt(inMano)}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:6px">${fmt(incassato)} − ${fmt(spese)} − ${fmt(guadagno)}</div>
+      </div>`;
+  }
+
+  $('sim-ciro').innerHTML = bloccoSocio('Ciro', incassatoCiro, speseCiro, guadagnoATesta, inManoCiro, 'green');
+  $('sim-gigi').innerHTML = bloccoSocio('Gigi', incassatoGigi, speseGigi, guadagnoATesta, inManoGigi, 'blue');
+
+  $('sim-totale').textContent = fmt(totale);
+  $('sim-totale').style.color = totale>=0 ? 'var(--accent)' : 'var(--red)';
+
+  $('sim-dettaglio').innerHTML = `
+    <strong>Come si calcola:</strong><br>
+    📦 Margine totale vendite del mese: <strong>${fmt(margTotale)}</strong> → guadagno a testa (50%): <strong>${fmt(guadagnoATesta)}</strong><br>
+    💰 Ciro ha incassato: <strong>${fmt(incassatoCiro)}</strong> e pagato spese: <strong>${fmt(speseCiro)}</strong><br>
+    💰 Gigi ha incassato: <strong>${fmt(incassatoGigi)}</strong> e pagato spese: <strong>${fmt(speseGigi)}</strong><br>
+    📅 Mese: <strong>${nomeMese}</strong>
+  `;
+}
+
+// ---- DEBITI FORNITORI ----
+function renderDebitiFor(){
+  const chiavi = Object.keys(S.mesi).sort().reverse();
+  const fornitoriConDebiti = [];
+  S.fornitori.forEach(f=>{
+    const righePerMese = [];
+    chiavi.forEach(k=>{
+      const s = saldoFor(f.id, k);
+      const [y,m] = k.split('-');
+      const nomeMese = MESI[+m-1]+' '+y;
+      if(s.acquistato>0 || s.saldo>0 || s.debitoVecchioResiduo>0){
+        righePerMese.push({k, nomeMese, acquistato:s.acquistato, pagato:s.pagato, acconti:s.acconti, resi:s.resi, saldo:s.saldo, debitoVecchio:s.debitoVecchio, debitoVecchioResiduo:s.debitoVecchioResiduo, pagSuDV:s.pagSuDV});
+      }
+    });
+    if(righePerMese.length>0){
+      const totFatturato = righePerMese.reduce((s,r)=>s+r.acquistato,0);
+      const totDebito = righePerMese.reduce((s,r)=>s+r.saldo,0);
+      const totDVRes = righePerMese.reduce((s,r)=>s+r.debitoVecchioResiduo,0);
+      fornitoriConDebiti.push({f, righe:righePerMese, totFatturato, totDebito, totDVRes});
+    }
+  });
+
+  const totaleGlobale = fornitoriConDebiti.reduce((s,x)=>s+x.totDebito+x.totDVRes,0);
+  if(totaleGlobale>0){ $('df-totale').style.display='block'; $('df-totale-val').textContent=fmt(totaleGlobale); }
+  else { $('df-totale').style.display='none'; }
+
+  if(!fornitoriConDebiti.length){
+    $('df-content').innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Nessun debito aperto verso i fornitori!</div>';
+    return;
+  }
+
+  // riepilogo per creditore
+  const perCreditore = {};
+  fornitoriConDebiti.forEach(function(x){
+    const cred = x.f.creditore;
+    if(!cred) return;
+    if(!perCreditore[cred]) perCreditore[cred]={saldo:0,dv:0,nomi:[]};
+    perCreditore[cred].saldo += x.totDebito;
+    perCreditore[cred].dv += x.totDVRes;
+    perCreditore[cred].nomi.push(x.f.nome);
+  });
+  let credHtml = '';
+  const creditori = Object.entries(perCreditore);
+  if(creditori.length){
+    let righe = creditori.map(function(e){
+      const nome=e[0], dati=e[1];
+      const dvSpan = dati.dv>0 ? '<span style="font-size:12px;color:var(--purple);font-weight:600">DV residuo: '+fmt(dati.dv)+'</span>' : '';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(14,128,128,0.2)">'
+        +'<div><span style="font-weight:700;font-size:14px;color:var(--teal)">'+nome+'</span>'
+        +'<span style="font-size:11px;color:var(--text2);margin-left:8px">('+dati.nomi.join(', ')+')</span></div>'
+        +'<div style="display:flex;gap:16px;align-items:center">'+dvSpan
+        +'<span style="font-weight:700;color:var(--red3);font-size:18px;background:var(--red2);padding:4px 12px;border-radius:8px;border:1px solid #F0B0B0">TOTALE: '+fmt(dati.saldo+dati.dv)+'</span>'
+        +'</div></div>';
+    }).join('');
+    credHtml = '<div style="margin-bottom:1.4rem;padding:14px 18px;background:var(--teal2);border:2px solid var(--teal);border-radius:var(--radius)">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Riepilogo per creditore</div>'
+      +righe+'</div>';
+  }
+
+  let blocchiFor = fornitoriConDebiti.map(function(x){
+    const f=x.f, righe=x.righe, totFatturato=x.totFatturato, totDebito=x.totDebito, totDVRes=x.totDVRes;
+    const totaleFornitore = totDebito + totDVRes;
+    const credBadge = f.creditore ? '<span style="font-size:11px;background:var(--teal2);color:var(--teal);border:1px solid var(--teal);border-radius:20px;padding:2px 8px;margin-left:8px;font-weight:600">'+f.creditore+'</span>' : '';
+    const telSpan = f.tel ? '<span style="font-size:11px;color:var(--text2);margin-left:4px">· '+f.tel+'</span>' : '';
+    const dvResSpan = totDVRes>0 ? '<span style="font-size:12px;color:var(--purple);font-weight:700">DV residuo: '+fmt(totDVRes)+'</span>' : '';
+    let righeHtml = righe.map(function(r){
+      const totRiga = r.saldo + r.debitoVecchioResiduo;
+      const dvCell = r.debitoVecchio>0
+        ? '<span style="font-weight:700;color:'+(r.debitoVecchioResiduo>0?'var(--purple)':'var(--green3)')+'">'+( r.debitoVecchioResiduo>0?fmt(r.debitoVecchioResiduo):'✓ Saldato')+'</span>'
+        : '<span style="color:var(--text3)">—</span>';
+      return '<tr>'
+        +'<td style="font-weight:600;white-space:nowrap">'+r.nomeMese+'</td>'
+        +'<td style="text-align:right;font-weight:600;color:var(--accent3)">'+fmt(r.acquistato)+'</td>'
+        +'<td style="text-align:right;color:var(--green3)">'+fmt(r.pagato)+'</td>'
+        +'<td style="text-align:right;color:var(--amber3)">'+fmt(r.acconti)+'</td>'
+        +'<td style="text-align:right;color:var(--green3)">'+fmt(r.resi)+'</td>'
+        +'<td style="text-align:right;font-weight:700;color:'+(r.saldo>0?'var(--red3)':'var(--text3)')+'">'+( r.saldo>0?fmt(r.saldo):'—')+'</td>'
+        +'<td style="text-align:right;background:var(--purple2)">'+dvCell+'</td>'
+        +'<td style="text-align:right;font-weight:800;font-size:14px;color:'+(totRiga>0?'var(--red3)':'var(--text3)')+'">'+( totRiga>0?fmt(totRiga):'—')+'</td>'
+        +'</tr>';
+    }).join('');
+    let totRow = '<tr style="background:linear-gradient(90deg,#FEF0F0,#fff);border-top:2px solid #F0B0B0">'
+      +'<td style="font-weight:800;color:var(--red3)">TOTALE</td>'
+      +'<td style="text-align:right;font-weight:700;color:var(--accent3)">'+fmt(totFatturato)+'</td>'
+      +'<td colspan="3"></td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--red3);font-size:14px">'+(totDebito>0?fmt(totDebito):'—')+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--purple);background:var(--purple2)">'+(totDVRes>0?fmt(totDVRes):'—')+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--red3);font-size:16px">'+fmt(totaleFornitore)+'</td>'
+      +'</tr>';
+    return '<div style="margin-bottom:1.4rem;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:linear-gradient(90deg,#EEF2FF,#E8EEFF);border-bottom:2px solid var(--border)">'
+      +'<div style="display:flex;align-items:center;gap:6px"><span style="font-weight:700;font-size:15px;color:var(--accent3)">'+f.nome+'</span>'+credBadge+telSpan+'</div>'
+      +'<div style="display:flex;gap:14px;align-items:center">'
+      +'<span style="font-size:12px;color:var(--text2)">Fatturato tot: <strong style="color:var(--accent3)">'+fmt(totFatturato)+'</strong></span>'
+      +dvResSpan
+      +'<span style="font-weight:700;color:var(--red3);font-size:16px;background:var(--red2);padding:4px 12px;border-radius:8px;border:1px solid #F0B0B0">Debito: '+fmt(totaleFornitore)+'</span>'
+      +'</div></div>'
+      +'<div class="table-wrap"><table>'
+      +'<thead><tr>'
+      +'<th>Mese</th>'
+      +'<th style="text-align:right">Fatturato €</th>'
+      +'<th style="text-align:right">Pagato €</th>'
+      +'<th style="text-align:right">Acconti €</th>'
+      +'<th style="text-align:right">Resi €</th>'
+      +'<th style="text-align:right;color:var(--red3)">Debito mese €</th>'
+      +'<th style="text-align:right;color:var(--purple)">DV residuo €</th>'
+      +'<th style="text-align:right;color:var(--red3);font-weight:800">Totale dovuto €</th>'
+      +'</tr></thead>'
+      +'<tbody>'+righeHtml+totRow+'</tbody>'
+      +'</table></div></div>';
+  }).join('');
+
+  $('df-content').innerHTML = credHtml + blocchiFor;
+}
+function stampaDebitiFor(){
+  const chiavi = Object.keys(S.mesi).sort().reverse();
+  const oggi = new Date();
+  const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+  const risultati = [];
+  chiavi.forEach(k=>{
+    const [y,m]=k.split('-');
+    const nomeMese=`${MESI[+m-1]} ${y}`;
+    const fornDebiti=[];
+    S.fornitori.forEach(f=>{
+      const s=saldoFor(f.id,k);
+      if(s.saldo>0) fornDebiti.push({nome:f.nome,tel:f.tel||'',saldo:s.saldo});
+    });
+    if(fornDebiti.length>0){
+      const totMese=fornDebiti.reduce((s,f)=>s+f.saldo,0);
+      risultati.push({nomeMese,fornitori:fornDebiti.sort((a,b)=>b.saldo-a.saldo),totMese});
+    }
+  });
+  const totaleGlobale=risultati.reduce((s,d)=>s+d.totMese,0);
+
+  const blocchi=risultati.map(d=>`
+    <div class="blocco">
+      <div class="mese-header"><span>${d.nomeMese}</span><span>Totale: ${d.totMese.toFixed(2)} €</span></div>
+      <table>
+        <thead><tr><th>Fornitore</th><th>Telefono</th><th style="text-align:right">Saldo da pagare €</th></tr></thead>
+        <tbody>
+          ${d.fornitori.map(f=>`<tr>
+            <td><strong>${f.nome}</strong></td>
+            <td style="color:#666">${f.tel||'—'}</td>
+            <td style="text-align:right;font-weight:700;color:#8B2020">${f.saldo.toFixed(2)} €</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`).join('');
+
+  const win=window.open('','_blank','width=700,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Debiti fornitori – ${dataStr}</title>
+  <style>
+    body{font-family:sans-serif;font-size:12px;padding:24px;color:#111}
+    h2{font-size:18px;margin-bottom:3px}
+    .sub{font-size:11px;color:#666;margin-bottom:20px}
+    .totale-box{text-align:center;padding:14px;background:#FEF0F0;border:2px solid #F0B0B0;border-radius:6px;margin-bottom:22px}
+    .totale-box .lbl{font-size:11px;color:#8B2020;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px}
+    .totale-box .val{font-size:28px;font-weight:700;color:#8B2020}
+    .blocco{margin-bottom:22px;page-break-inside:avoid}
+    .mese-header{display:flex;justify-content:space-between;padding:7px 12px;background:#FEF0F0;border:1px solid #F0B0B0;border-bottom:none;border-radius:4px 4px 0 0;font-weight:700;color:#8B2020;font-size:13px}
+    table{width:100%;border-collapse:collapse;border:1px solid #F0B0B0;border-top:none}
+    th{background:#FFF5F5;padding:6px 10px;font-size:11px;text-align:left;border-bottom:1px solid #F0B0B0;color:#8B2020}
+    td{padding:7px 10px;border-bottom:1px solid #EEE}
+    tr:last-child td{border-bottom:none}
+    @media print{body{padding:10px}.blocco{page-break-inside:avoid}}
+  </style></head><body>
+  <h2>Debiti verso fornitori</h2>
+  <div class="sub">Stampato il: ${dataStr}</div>
+  <div class="totale-box">
+    <div class="lbl">Totale debiti verso tutti i fornitori</div>
+    <div class="val">${totaleGlobale.toFixed(2)} €</div>
+  </div>
+  ${blocchi||'<p style="text-align:center;color:#999;padding:20px">Nessun debito aperto</p>'}
+  <script>window.onload=()=>{window.print();}<\/script>
+  <\/body><\/html>`);
+  win.document.close();
+}
+
+// ---- RESI CLIENTI ----
+function renderResiClienti(){
+  const nascondi = $('chk-rc-completati')?.checked;
+
+  // raccoglie tutti i ricondizionati da tutte le vendite di tutti i mesi
+  const righe = [];
+  Object.keys(S.mesi).sort().reverse().forEach(k=>{
+    const ms = getMese(k);
+    const [ry,rm] = k.split('-');
+    const nomeMese = `${MESI[+rm-1]} ${ry}`;
+    ms.vendite.filter(v=>v.ricond==='si').forEach(v=>{
+      righe.push({v, k, nomeMese, ritirato: v.ritiroStato?.ritiratoDaCliente||false});
+    });
+  });
+
+  const totale = righe.length;
+  const ritirati = righe.filter(r=>r.ritirato).length;
+  const daRitirare = totale - ritirati;
+
+  $('rc-stats').innerHTML=`
+    <div class="metric m-blue"><div class="m-label">Totale ricondizionati</div><div class="m-value blue">${totale}</div></div>
+    <div class="metric m-green"><div class="m-label">Già ritirati</div><div class="m-value green">${ritirati}</div></div>
+    <div class="metric ${daRitirare>0?'m-red':'m-green'}"><div class="m-label">Da ritirare</div><div class="m-value ${daRitirare>0?'red':'green'}">${daRitirare}</div></div>
+  `;
+
+  const righeVis = nascondi ? righe.filter(r=>!r.ritirato) : righe;
+
+  $('tbl-rc').innerHTML = !righeVis.length
+    ? `<tr><td colspan="6" class="empty-row">${totale===0?'Nessun articolo ricondizionato registrato':'Tutti gli articoli sono stati ritirati!'}</td></tr>`
+    : righeVis.map(({v,k,nomeMese,ritirato})=>`<tr style="${ritirato?'opacity:0.45':''}">
+        <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${v.data}</td>
+        <td style="font-weight:600;color:var(--accent3)">${v.cnome}</td>
+        <td style="font-weight:500">${v.art}${v.cod?` <code style="font-size:10px;background:var(--surface2);padding:1px 5px;border-radius:3px">${v.cod}</code>`:''}</td>
+        <td>${v.fnome}</td>
+        <td style="font-size:11px;color:var(--text2)">${nomeMese}</td>
+        <td class="check-cell">
+          <input type="checkbox" ${ritirato?'checked':''}
+            onchange="toggleRcRitirato('${k}',${v.id})"
+            style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
+        </td>
+      </tr>`).join('');
+}
+
+function toggleRcRitirato(meseKey, vid){
+  const ms = getMese(meseKey);
+  const v = ms.vendite.find(x=>x.id==vid); if(!v)return;
+  if(!v.ritiroStato) v.ritiroStato={};
+  v.ritiroStato.ritiratoDaCliente = !v.ritiroStato.ritiratoDaCliente;
+  save(); renderResiClienti();
+}
+
+function stampaResiClienti(){
+  const oggi = new Date();
+  const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+
+  const righe = [];
+  Object.keys(S.mesi).sort().reverse().forEach(k=>{
+    const ms = getMese(k);
+    const [ry,rm] = k.split('-');
+    const nomeMese = `${MESI[+rm-1]} ${ry}`;
+    ms.vendite.filter(v=>v.ricond==='si'&&!v.ritiroStato?.ritiratoDaCliente).forEach(v=>{
+      righe.push({v, nomeMese});
+    });
+  });
+
+  const rows = righe.map(({v,nomeMese})=>`
+    <tr>
+      <td>${v.data}</td>
+      <td><strong>${v.cnome}</strong></td>
+      <td>${v.art}${v.cod?' ['+v.cod+']':''}</td>
+      <td>${v.fnome}</td>
+      <td style="font-size:11px;color:#666">${nomeMese}</td>
+    </tr>`).join('');
+
+  const win = window.open('','_blank','width=800,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Resi clienti da ritirare – ${dataStr}</title>
+  <style>
+    body{font-family:sans-serif;font-size:12px;padding:24px;color:#111}
+    h2{font-size:18px;margin-bottom:3px}
+    .sub{font-size:11px;color:#666;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#FEF0F5;padding:7px 12px;text-align:left;font-size:11px;border-bottom:2px solid #F090C0;color:#6B1A3A;text-transform:uppercase;letter-spacing:0.4px}
+    td{padding:8px 12px;border-bottom:1px solid #EEE;vertical-align:middle}
+    tr:nth-child(even) td{background:#FFF8FB}
+    .footer{font-size:13px;font-weight:700;margin-top:14px;padding:10px 14px;background:#FEF0F5;border-radius:5px;color:#6B1A3A;text-align:right}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h2>Resi clienti da ritirare</h2>
+  <div class="sub">Stampato il: ${dataStr} &nbsp;|&nbsp; Articoli da ritirare: ${righe.length}</div>
+  <table>
+    <thead><tr>
+      <th>Data vendita</th><th>Cliente</th><th>Articolo da ritirare</th><th>Fornitore</th><th>Mese</th>
+    </tr></thead>
+    <tbody>${rows||'<tr><td colspan="5" style="text-align:center;padding:20px;color:#999">Nessun reso da ritirare</td></tr>'}</tbody>
+  </table>
+  <div class="footer">Totale da ritirare: ${righe.length} articoli</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  <\/body><\/html>`);
+  win.document.close();
+}
+
+// ---- INSOLUTI CLIENTI ----
+function getInsolutiPerMese(){
+  // raccoglie tutti gli insoluti da tutti i mesi, raggruppati per mese
+  const risultati = []; // [{meseKey, nomeMese, righe:[{data,cnome,art,fnome,saldo,stato}], totale}]
+  const chiavi = Object.keys(S.mesi).sort().reverse();
+  chiavi.forEach(k=>{
+    const ms = getMese(k);
+    const [y,m] = k.split('-');
+    const nomeMese = `${MESI[+m-1]} ${y}`;
+    const righe = ms.vendite
+      .filter(v=>v.stato==='nonpagato'||v.stato==='acconto')
+      .map(v=>({
+        data:v.data, cnome:v.cnome, art:v.art, fnome:v.fnome,
+        saldo: v.stato==='acconto' ? parseFloat((v.totLordo-(v.acconto||0)).toFixed(2)) : v.totLordo,
+        stato: v.stato, acconto: v.acconto||0, ricond: v.ricond
+      })).sort((a,b)=>a.cnome.localeCompare(b.cnome));
+    if(righe.length>0){
+      const totale = righe.reduce((s,r)=>s+r.saldo,0);
+      risultati.push({meseKey:k, nomeMese, righe, totale});
+    }
+  });
+  return risultati;
+}
+
+function renderInsoluti(){
+  const dati = getInsolutiPerMese();
+  const cont = $('insoluti-content');
+  if(!dati.length){
+    cont.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">🎉 Nessun insoluto in nessun mese!</div>';
+    return;
+  }
+  const totaleGlobale = dati.reduce((s,d)=>s+d.totale,0);
+  cont.innerHTML = dati.map(d=>`
+    <div style="margin-bottom:1.2rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:linear-gradient(90deg,var(--red2),#fff);border-radius:var(--radius-sm) var(--radius-sm) 0 0;border:1px solid #F0B0B0;border-bottom:none">
+        <span style="font-weight:700;color:var(--red3);font-size:14px">${d.nomeMese}</span>
+        <span style="font-weight:700;color:var(--red3);font-family:'DM Mono',monospace">${fmt(d.totale)} da incassare</span>
+      </div>
+      <div class="table-wrap"><table style="border:1px solid #F0B0B0;border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);overflow:hidden">
+        <thead><tr>
+          <th>Data vendita</th><th>Cliente</th><th>Articolo</th><th style="color:var(--red3)">Saldo da dare</th><th>Stato</th>
+        </tr></thead>
+        <tbody>
+          ${d.righe.map(r=>`<tr>
+            <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${r.data}</td>
+            <td style="font-weight:600;color:var(--accent3)">${r.cnome}</td>
+            <td>${r.art}${r.ricond==='si'?'<span class="badge b-pink" style="margin-left:6px;font-size:10px">da ritirare</span>':''}</td>
+            <td style="font-weight:700;color:var(--red3);font-size:14px">${fmt(r.saldo)}</td>
+            <td><span class="badge ${r.stato==='acconto'?'b-amber':'b-red'}">${r.stato==='acconto'?'Acc. dato: '+fmt(r.acconto):'Non pagato'}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>`).join('')
+    + `<div style="text-align:right;font-size:16px;font-weight:700;color:var(--red3);padding:12px 16px;background:var(--red2);border-radius:var(--radius-sm);border:1px solid #F0B0B0">
+        Totale insoluti tutti i mesi: ${fmt(totaleGlobale)}
+       </div>`;
+}
+
+function stampaInsolutiDettaglio(){
+  const dati = getInsolutiPerMese();
+  const oggi = new Date();
+  const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+  const totaleGlobale = dati.reduce((s,d)=>s+d.totale,0);
+
+  const blocchi = dati.map(d=>{
+    // aggrega per cliente - una sola riga con il totale
+    const perCliente = {};
+    d.righe.forEach(r=>{
+      if(!perCliente[r.cnome]) perCliente[r.cnome]={cnome:r.cnome, saldo:0, nVendite:0};
+      perCliente[r.cnome].saldo += r.saldo;
+      perCliente[r.cnome].nVendite++;
+    });
+    const clienti = Object.values(perCliente).sort((a,b)=>b.saldo-a.saldo);
+
+    return`
+    <div class="blocco-mese">
+      <div class="mese-header">
+        <span>${d.nomeMese}</span>
+        <span>Totale mese: ${d.totale.toFixed(2)} €</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Cliente</th><th style="text-align:right">Totale da dare €</th>
+        </tr></thead>
+        <tbody>
+          ${clienti.map(c=>`<tr>
+            <td><strong>${c.cnome}</strong>${c.nVendite>1?` <span style="font-size:10px;color:#999">(${c.nVendite} vendite)</span>`:''}</td>
+            <td style="text-align:right;font-weight:700;color:#8B2020;font-size:15px">${c.saldo.toFixed(2)} €</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  const win = window.open('','_blank','width=700,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Insoluti clienti – ${dataStr}</title>
+  <style>
+    body{font-family:sans-serif;font-size:13px;padding:24px;color:#111}
+    h2{font-size:20px;margin-bottom:3px}
+    .sub{font-size:11px;color:#666;margin-bottom:22px}
+    .blocco-mese{margin-bottom:26px;page-break-inside:avoid}
+    .mese-header{display:flex;justify-content:space-between;padding:8px 14px;background:#FEF0F0;border:1.5px solid #F0B0B0;border-bottom:none;border-radius:5px 5px 0 0;font-weight:700;color:#8B2020;font-size:14px}
+    table{width:100%;border-collapse:collapse;border:1.5px solid #F0B0B0;border-top:none;border-radius:0 0 5px 5px;overflow:hidden}
+    th{background:#FFF5F5;padding:7px 12px;text-align:left;font-size:11px;border-bottom:1.5px solid #F0B0B0;color:#8B2020;text-transform:uppercase;letter-spacing:0.4px}
+    td{padding:9px 12px;border-bottom:1px solid #EEE;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    .totale-globale{text-align:right;font-size:16px;font-weight:700;color:#8B2020;padding:14px 18px;background:#FEF0F0;border:1.5px solid #F0B0B0;border-radius:5px;margin-top:10px}
+    @media print{body{padding:10px}.blocco-mese{page-break-inside:avoid}}
+  </style></head><body>
+  <h2>Insoluti clienti</h2>
+  <div class="sub">Stampato il: ${dataStr} &nbsp;|&nbsp; Mesi con insoluti: ${dati.length}</div>
+  ${blocchi||'<p style="color:#999;text-align:center;padding:20px">Nessun insoluto</p>'}
+  <div class="totale-globale">Totale insoluti: ${totaleGlobale.toFixed(2)} €</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  <\/body><\/html>`);
+  win.document.close();
+}
+
+// ---- STAMPE RAPIDE ----
+function stampaInsoluti(){
+  const oggi = new Date();
+  const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+  const [y,m] = meseAttivo.split('-');
+  const nomeMese = `${['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'][+m-1]} ${y}`;
+
+  // clienti con saldo > 0
+  const insolventi = S.clienti.map(c=>{
+    const {dovuto, acconti, saldo} = saldoCli(c.id, meseAttivo);
+    return {...c, dovuto, acconti, saldo};
+  }).filter(c=>c.saldo>0).sort((a,b)=>b.saldo-a.saldo);
+
+  const totale = insolventi.reduce((s,c)=>s+c.saldo, 0);
+
+  const rows = insolventi.map(c=>`
+    <tr>
+      <td style="font-weight:600">${c.nome}</td>
+      <td>${c.ref||'—'}</td>
+      <td>${c.tel||'—'}</td>
+      <td>${c.city||'—'}</td>
+      <td style="text-align:right">${c.dovuto.toFixed(2)} €</td>
+      <td style="text-align:right">${c.acconti.toFixed(2)} €</td>
+      <td style="text-align:right;font-weight:700;color:#8B2020">${c.saldo.toFixed(2)} €</td>
+    </tr>`).join('');
+
+  const win = window.open('','_blank','width=900,height:700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Insoluti clienti – ${nomeMese}</title>
+  <style>
+    body{font-family:sans-serif;font-size:12px;padding:24px;color:#111}
+    h2{font-size:18px;margin-bottom:4px}
+    .sub{font-size:12px;color:#666;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#EEF2FF;padding:7px 10px;text-align:left;font-size:11px;border-bottom:2px solid #B8C4E8;color:#1A3A8C}
+    td{padding:7px 10px;border-bottom:1px solid #E2DDD5;vertical-align:middle}
+    .totale{text-align:right;font-size:14px;font-weight:700;margin-top:16px;color:#8B2020;padding:10px;background:#FEF0F0;border-radius:6px}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h2>Lista insoluti clienti</h2>
+  <div class="sub">Mese: ${nomeMese} &nbsp;|&nbsp; Stampato il: ${dataStr} &nbsp;|&nbsp; Clienti con debito: ${insolventi.length}</div>
+  <table>
+    <thead><tr>
+      <th>Ragione sociale</th><th>Nome</th><th>Telefono</th><th>Città</th>
+      <th style="text-align:right">Deve €</th><th style="text-align:right">Acconti €</th><th style="text-align:right">Saldo €</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="totale">Totale da incassare: ${totale.toFixed(2)} €</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  <\/body><\/html>`);
+  win.document.close();
+}
+
+function stampaResiDaRitirare(){
+  const oggi = new Date();
+  const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+
+  // raccoglie tutti i resi da ritirare (ricondizionati dalle vendite di tutti i mesi)
+  const righe = [];
+  Object.keys(S.mesi).sort().forEach(k=>{
+    const ms = getMese(k);
+    const [ry,rm] = k.split('-');
+    const nomeMese = `${['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'][+rm-1]} ${ry}`;
+    ms.vendite.filter(v=>v.ricond==='si').forEach(v=>{
+      righe.push({v, nomeMese,
+        ritirato: v.ritiroStato?.ritiratoDaCliente||false,
+        restituito: v.ritiroStato?.restituitoAlFornitore||false
+      });
+    });
+    // aggiungi anche resi manuali ricondizionati
+    ms.resi.filter(r=>r.tipo==='ricondizionato').forEach(r=>{
+      righe.push({r, nomeMese,
+        ritirato: r.ritiratoDaCliente||false,
+        restituito: r.restituitoAlFornitore||false,
+        isManuale: true
+      });
+    });
+  });
+
+  const daSvolgere = righe.filter(x=>!x.ritirato||!x.restituito);
+
+  const rows = daSvolgere.map(x=>{
+    if(x.v){
+      const v=x.v;
+      return`<tr>
+        <td>${v.data}</td><td>${x.nomeMese}</td>
+        <td style="font-family:monospace">${v.cod||'—'}</td>
+        <td><strong>${v.art}</strong></td>
+        <td>${v.cnome}</td><td>${v.fnome}</td>
+        <td style="text-align:center;font-size:16px">${x.ritirato?'☑':'☐'}</td>
+        <td style="text-align:center;font-size:16px">${x.restituito?'☑':'☐'}</td>
+      </tr>`;
+    } else {
+      const r=x.r;
+      return`<tr>
+        <td>${r.data}</td><td>${x.nomeMese}</td>
+        <td style="font-family:monospace">${r.cod||'—'}</td>
+        <td><strong>${r.desc}</strong></td>
+        <td>—</td><td>${r.fnome}</td>
+        <td style="text-align:center;font-size:16px">${x.ritirato?'☑':'☐'}</td>
+        <td style="text-align:center;font-size:16px">${x.restituito?'☑':'☐'}</td>
+      </tr>`;
+    }
+  }).join('');
+
+  const win = window.open('','_blank','width=900,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Resi da ritirare – ${dataStr}</title>
+  <style>
+    body{font-family:sans-serif;font-size:12px;padding:24px;color:#111}
+    h2{font-size:18px;margin-bottom:4px}
+    .sub{font-size:12px;color:#666;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#FEF0F5;padding:7px 10px;text-align:left;font-size:11px;border-bottom:2px solid #F090C0;color:#6B1A3A}
+    td{padding:7px 10px;border-bottom:1px solid #E2DDD5;vertical-align:middle}
+    tr:nth-child(even) td{background:#FFF8FB}
+    .totale{font-size:13px;font-weight:700;margin-top:16px;padding:10px;background:#FEF0F5;border-radius:6px;color:#6B1A3A}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h2>Lista resi da ritirare / restituire</h2>
+  <div class="sub">Stampato il: ${dataStr} &nbsp;|&nbsp; Articoli da gestire: ${daSvolgere.length}</div>
+  <table>
+    <thead><tr>
+      <th>Data</th><th>Mese</th><th>Codice</th><th>Articolo</th><th>Cliente</th><th>Fornitore</th>
+      <th style="text-align:center">Ritirato<br>dal cliente</th>
+      <th style="text-align:center">Restituito<br>al fornitore</th>
+    </tr></thead>
+    <tbody>${rows || '<tr><td colspan="8" style="text-align:center;padding:20px;color:#999">Nessun reso da gestire</td></tr>'}</tbody>
+  </table>
+  <div class="totale">Totale da gestire: ${daSvolgere.length} &nbsp;|&nbsp; Totale completati: ${righe.length - daSvolgere.length} di ${righe.length}</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  <\/body><\/html>`);
+  win.document.close();
+}
+
+function renderRiepilogo(){
+  const [y,m]=meseAttivo.split('-');
+  $('rip-title').textContent=`Riepilogo – ${MESI[+m-1]} ${y}`;
+  renderRiepilogoIn(meseAttivo,'met','ric-ciro','ric-gigi','ric-for','ric-cli','ric-ricond');
+}
+
+function renderStorico(){
+  const keys=Object.keys(S.mesi).filter(k=>{const ms=getMese(k);return ms.vendite.length||ms.uscite.length||ms.resi.length||ms.acconti.length;}).sort().reverse();
+  if(!keys.length){ $('storico-lista').innerHTML='<p style="color:var(--text3);font-size:13px;padding:1rem 0">Nessun dato storico ancora. I mesi appariranno qui automaticamente.</p>'; return; }
+  $('storico-lista').innerHTML=keys.map(k=>{
+    const [y,m]=k.split('-'); const nm=`${MESI[+m-1]} ${y}`;
+    const c=calcolaMese(k); const ms=getMese(k);
+    return`<div class="storico-mese">
+      <div class="storico-header" onclick="toggleStorico('${k}')">
+        <span class="sh-title">${nm}</span>
+        <div class="sh-nums">
+          <span>${ms.vendite.length} vendite</span>
+          <span>Incassato: ${fmt(c.venPagate)}</span>
+          <span>Margine: ${fmt(c.totMarg)}</span>
+          <span>Cassa: ${fmt(c.cassa)}</span>
+          <span style="margin-left:4px">▼</span>
+        </div>
+      </div>
+      <div class="storico-body" id="sb-${k}">
+        <div class="metrics-grid" id="sm-${k}"></div>
+        <div class="two-col" style="margin-top:.8rem">
+          <div><p style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:.5rem">Ciro</p><div id="sc-${k}"></div></div>
+          <div><p style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:.5rem">Gigi</p><div id="sg-${k}"></div></div>
+        </div>
+        <div class="two-col" style="margin-top:.8rem">
+          <div><p style="font-size:12px;font-weight:600;margin-bottom:.5rem">Fornitori</p><div id="sf-${k}"></div></div>
+          <div><p style="font-size:12px;font-weight:600;margin-bottom:.5rem">Clienti</p><div id="scl-${k}"></div></div>
+        </div>
+        <div style="margin-top:.8rem"><p style="font-size:12px;font-weight:600;margin-bottom:.5rem">Ricondizionati da ritirare</p><div id="sr-${k}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleStorico(k){
+  const b=$('sb-'+k); const wasOpen=b.classList.contains('open');
+  b.classList.toggle('open',!wasOpen);
+  if(!wasOpen) renderRiepilogoIn(k,`sm-${k}`,`sc-${k}`,`sg-${k}`,`sf-${k}`,`scl-${k}`,`sr-${k}`);
+}
+
+// ---- ARTICOLI RICONDIZIONATI ----
+function toggleRicondCheck(meseKey, vid, campo){
+  const ms = getMese(meseKey);
+  const v = ms.vendite.find(x=>x.id==vid);
+  if(!v) return;
+  if(!v.ritiroStato) v.ritiroStato = {};
+  v.ritiroStato[campo] = !v.ritiroStato[campo];
+  save(); renderRitiri();
+}
+
+function stampRicond(){
+  const win = window.open('','_blank','width=900,height=700');
+  const oggi = new Date();
+  const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+
+  // raccogli righe
+  const righe = [];
+  Object.keys(S.mesi).sort().forEach(k=>{
+    getMese(k).vendite.filter(v=>v.ricond==='si').forEach(v=>{
+      const [ry,rm] = k.split('-');
+      righe.push({v, k, nomeMese:`${MESI[+rm-1]} ${ry}`});
+    });
+  });
+
+  const nascContr = $('chk-nascondi-completati') && $('chk-nascondi-completati').checked;
+  const righeStampa = nascContr ? righe.filter(({v})=>!(v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore)) : righe;
+
+  const rows = righeStampa.map(({v,nomeMese})=>`
+    <tr style="${v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore ? 'opacity:0.4;text-decoration:line-through' : ''}">
+      <td>${v.data}</td><td>${nomeMese}</td>
+      <td style="font-family:monospace">${v.cod||'—'}</td>
+      <td><strong>${v.art}</strong></td>
+      <td>${v.cnome}</td><td>${v.fnome}</td><td>${v.qty}</td>
+      <td>${fmt(v.prez)}</td><td>${v.socio}</td><td>${v.note||''}</td>
+      <td style="text-align:center;font-size:18px">${v.ritiroStato?.ritiratoDaCliente?'☑':'☐'}</td>
+      <td style="text-align:center;font-size:18px">${v.ritiroStato?.restituitoAlFornitore?'☑':'☐'}</td>
+    </tr>`).join('');
+
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Ricondizionati da ritirare – ${dataStr}</title>
+  <style>
+    body{font-family:sans-serif;font-size:12px;padding:20px;color:#111}
+    h2{font-size:16px;margin-bottom:4px}
+    p{font-size:11px;color:#666;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#f0ede7;padding:6px 8px;text-align:left;font-size:11px;border-bottom:2px solid #ccc}
+    td{padding:6px 8px;border-bottom:1px solid #e0ddd5;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    .completata td{opacity:.4;text-decoration:line-through}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h2>Articoli ricondizionati da ritirare</h2>
+  <p>Stampato il ${dataStr} &nbsp;|&nbsp; Totale articoli: ${righeStampa.length}</p>
+  <table>
+    <thead><tr>
+      <th>Data</th><th>Mese</th><th>Codice</th><th>Articolo</th><th>Cliente</th>
+      <th>Fornitore</th><th>Qtà</th><th>Prezzo</th><th>Socio</th><th>Note</th>
+      <th>Ritirato<br>dal cliente</th><th>Restituito<br>al fornitore</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <script>window.onload=()=>{window.print();}<\/script>
+  <\/body><\/html>`);
+  win.document.close();
+}
+
+function editDebitoVecchio(fid, meseKey){
+  const dvKey=`dv_${fid}_${meseKey}`;
+  const attuale=(S.debitiVecchi&&S.debitiVecchi[dvKey])||0;
+  const f=S.fornitori.find(x=>x.id==fid);
+  const val=prompt(`Debito vecchio iniziale per ${f?f.nome:'fornitore'} (${meseKey}):\nInserisci il totale del debito pregresso da cui scalare i pagamenti.`, attuale||'');
+  if(val===null) return; // annullato
+  salvaDebitoVecchio(fid, meseKey, val);
+  render();
+}
+
+function salvaDebitoVecchio(fid, meseKey, val){
+  if(!S.debitiVecchi) S.debitiVecchi = {};
+  const key = `dv_${fid}_${meseKey}`;
+  const v = parseFloat(val) || 0;
+  if(v > 0) S.debitiVecchi[key] = v;
+  else delete S.debitiVecchi[key];
+  save();
+}
+
+function renderRitiri(){
+  const tbody = $('tbl-ritiri');
+  const stats = $('ritiri-stats');
+  const nascondi = $('chk-nascondi-completati') && $('chk-nascondi-completati').checked;
+
+  // Raccogli tutte le vendite ricondizionate da tutti i mesi
+  const righe = [];
+  Object.keys(S.mesi).sort().reverse().forEach(k=>{
+    const ms = getMese(k);
+    const [ry,rm] = k.split('-');
+    ms.vendite.filter(v=>v.ricond==='si').forEach(v=>{
+      righe.push({v, k, nomeMese:`${MESI[+rm-1]} ${ry}`});
+    });
+  });
+
+  // Statistiche
+  const totale = righe.length;
+  const ritirati = righe.filter(({v})=>v.ritiroStato?.ritiratoDaCliente).length;
+  const restituiti = righe.filter(({v})=>v.ritiroStato?.restituitoAlFornitore).length;
+  const completi = righe.filter(({v})=>v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore).length;
+  const daFare = totale - completi;
+
+  stats.innerHTML = `
+    <div class="metric m-blue"><div class="m-label">Totale ricondizionati</div><div class="m-value blue">${totale}</div></div>
+    <div class="metric m-amber"><div class="m-label">Ritirati dal cliente</div><div class="m-value amber">${ritirati}</div></div>
+    <div class="metric m-green"><div class="m-label">Restituiti al fornitore</div><div class="m-value green">${restituiti}</div></div>
+    <div class="metric m-green"><div class="m-label">Completati</div><div class="m-value green">${completi}</div></div>
+    <div class="metric ${daFare>0?'m-red':'m-green'}"><div class="m-label">Da gestire</div><div class="m-value ${daFare>0?'red':'green'}">${daFare}</div></div>
+  `;
+
+  const righeVis = nascondi ? righe.filter(({v})=>!(v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore)) : righe;
+
+  if(!righeVis.length){
+    tbody.innerHTML = `<tr><td colspan="12" class="empty-row">${totale===0?'Nessuna vendita ricondizionata registrata':'Tutti gli articoli sono stati gestiti!'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = righeVis.map(({v, k, nomeMese})=>{
+    const completata = v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore;
+    const rs = v.ritiroStato || {};
+    return `<tr style="${completata?'opacity:0.5':''}">
+      <td style="font-size:11px;white-space:nowrap">${v.data}</td>
+      <td style="font-size:11px;white-space:nowrap">${nomeMese}</td>
+      <td><code style="font-family:'DM Mono',monospace;font-size:11px">${v.cod||'—'}</code></td>
+      <td style="font-weight:500">${v.art}</td>
+      <td>${v.cnome}</td>
+      <td>${v.fnome}</td>
+      <td style="text-align:center">${v.qty}</td>
+      <td>${fmt(v.prez)}</td>
+      <td>${v.socio}</td>
+      <td style="font-size:11px;color:var(--text2);max-width:90px">${v.note||'—'}</td>
+      <td class="check-cell">
+        <input type="checkbox" ${rs.ritiratoDaCliente?'checked':''}
+          onchange="toggleRicondCheck('${k}',${v.id},'ritiratoDaCliente')"
+          style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
+      </td>
+      <td class="check-cell">
+        <input type="checkbox" ${rs.restituitoAlFornitore?'checked':''}
+          onchange="toggleRicondCheck('${k}',${v.id},'restituitoAlFornitore')"
+          style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- AUTOCOMPLETE ARTICOLO ----
+let artAcIdx = -1;
+
+function getArticoliStorici(){
+  // raccoglie articoli unici da tutte le vendite di tutti i mesi
+  const visti = new Map(); // chiave = art lowercase, valore = oggetto {art, cod, costo, prez, fid}
+  Object.values(S.mesi).forEach(ms=>{
+    (ms.vendite||[]).forEach(v=>{
+      if(v.art && !visti.has(v.art.toLowerCase())){
+        visti.set(v.art.toLowerCase(), {art:v.art, cod:v.cod||'', costo:v.costo||0, prez:v.prez||0, fid:v.fid||''});
+      }
+    });
+  });
+  return Array.from(visti.values());
+}
+
+function artAcFilter(){
+  const txt = $('v-art').value.trim().toLowerCase();
+  const list = $('art-ac-list');
+  artAcIdx = -1;
+  const storico = getArticoliStorici();
+  if(!txt || !storico.length){ list.innerHTML=''; list.classList.remove('open'); return; }
+  const matches = storico.filter(a => a.art.toLowerCase().includes(txt)).slice(0,10);
+  if(!matches.length){ list.classList.remove('open'); return; }
+  list.innerHTML = matches.map(a=>`
+    <div class="ac-item" data-art="${a.art.replace(/"/g,'&quot;')}"
+      data-cod="${a.cod}" data-costo="${a.costo}" data-prez="${a.prez}" data-fid="${a.fid}"
+      onmousedown="artAcScegli(this)">
+      <div>${a.art}</div>
+      ${a.cod?`<div class="ac-sub">Cod: ${a.cod}${a.costo?' · Costo: €'+a.costo:''}${a.prez?' · Prezzo: €'+a.prez:''}</div>`:''}
+    </div>`).join('');
+  list.classList.add('open');
+}
+
+function artAcKey(e){
+  const list = $('art-ac-list');
+  const items = list.querySelectorAll('.ac-item');
+  if(!items.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); artAcIdx=Math.min(artAcIdx+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('selected',i===artAcIdx)); if(artAcIdx>=0)items[artAcIdx].scrollIntoView({block:'nearest'}); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); artAcIdx=Math.max(artAcIdx-1,0); items.forEach((el,i)=>el.classList.toggle('selected',i===artAcIdx)); }
+  else if(e.key==='Enter'){ e.preventDefault(); if(artAcIdx>=0&&items[artAcIdx]) artAcScegli(items[artAcIdx]); else if(items.length===1) artAcScegli(items[0]); }
+  else if(e.key==='Escape'){ $('art-ac-list').classList.remove('open'); }
+}
+
+function artAcScegli(el){
+  $('v-art').value = el.dataset.art;
+  // precompila automaticamente codice, costo, prezzo se vuoti
+  if(el.dataset.cod && !$('v-cod').value) $('v-cod').value = el.dataset.cod;
+  if(el.dataset.costo && !$('v-costo').value) $('v-costo').value = el.dataset.costo;
+  if(el.dataset.prez && !$('v-prez').value) $('v-prez').value = el.dataset.prez;
+  if(el.dataset.fid && !$('v-for').value) $('v-for').value = el.dataset.fid;
+  $('art-ac-list').classList.remove('open');
+  artAcIdx = -1;
+}
+
+function artAcBlur(){ setTimeout(()=>$('art-ac-list').classList.remove('open'), 150); }
+
+// ---- AUTOCOMPLETE CLIENTE ----
+let acIdx = -1;
+
+function acFilter(){
+  const txt = $('v-cli-txt').value.trim().toLowerCase();
+  const list = $('ac-list');
+  acIdx = -1;
+  if(!txt){ list.innerHTML=''; list.classList.remove('open'); $('v-cli').value=''; return; }
+  const matches = S.clienti.filter(c=>{
+    const full = (c.nome + ' ' + (c.ref||'')).toLowerCase();
+    return full.includes(txt);
+  }).slice(0,12);
+  if(!matches.length){ list.innerHTML='<div class="ac-item" style="color:var(--text3)">Nessun risultato</div>'; list.classList.add('open'); return; }
+  list.innerHTML = matches.map((c,i)=>`
+    <div class="ac-item" data-id="${c.id}" data-label="${c.nome}${c.ref?' ('+c.ref+')':''}" onmousedown="acScegli('${c.id}','${(c.nome+(c.ref?' ('+c.ref+')':'')).replace(/'/g,"\\'")}')">
+      <div>${c.nome}</div>
+      ${c.ref||c.city?`<div class="ac-sub">${[c.ref,c.city].filter(Boolean).join(' · ')}</div>`:''}
+    </div>`).join('');
+  list.classList.add('open');
+}
+
+function acKey(e){
+  const list = $('ac-list');
+  const items = list.querySelectorAll('.ac-item[data-id]');
+  if(!items.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); acIdx=Math.min(acIdx+1,items.length-1); acHighlight(items); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); acIdx=Math.max(acIdx-1,0); acHighlight(items); }
+  else if(e.key==='Enter'||e.key===','){ e.preventDefault();
+    if(acIdx>=0 && items[acIdx]){ const el=items[acIdx]; acScegli(el.dataset.id, el.dataset.label); }
+    else if(items.length===1){ const el=items[0]; acScegli(el.dataset.id, el.dataset.label); }
+  }
+  else if(e.key==='Escape'){ acChiudi(); }
+}
+
+function acHighlight(items){
+  items.forEach((el,i)=>el.classList.toggle('selected',i===acIdx));
+  if(acIdx>=0) items[acIdx].scrollIntoView({block:'nearest'});
+}
+
+function acScegli(id, label){
+  $('v-cli').value = id;
+  $('v-cli-txt').value = label;
+  $('ac-list').classList.remove('open');
+  acIdx = -1;
+}
+
+function acBlur(){ setTimeout(acChiudi, 150); }
+function acChiudi(){ $('ac-list').classList.remove('open'); acIdx=-1; }
+
+function acReset(){
+  $('v-cli-txt').value='';
+  $('v-cli').value='';
+  $('ac-list').classList.remove('open');
+  acIdx=-1;
+}
+
+// Precompila il campo testo autocomplete quando si fa editVendita
+function acSetValore(cid){
+  if(!cid){ acReset(); return; }
+  const c=S.clienti.find(x=>x.id==cid);
+  if(c){ $('v-cli-txt').value=c.nome+(c.ref?' ('+c.ref+')':''); $('v-cli').value=cid; }
+}
+
+function setDate(){
+  const d=new Date(); const g=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'][d.getDay()];
+  $('oggi').textContent=`${g} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+setDate(); initMeseSel(); load(); importaClientiPDF(); initGoogleDrive();
+// imposta data odierna su tutti i campi data
+document.addEventListener('DOMContentLoaded',()=>{
+  ['v-data','u-data','r-data','a-data'].forEach(id=>{ const e=$(id); if(e) e.value=todayISO(); });
+});
+// fallback immediato nel caso DOMContentLoaded sia già passato
+setTimeout(()=>{ ['v-data','u-data','r-data','a-data'].forEach(id=>{ const e=$(id); if(e&&!e.value) e.value=todayISO(); }); },100);
+
+function importaClientiPDF(){
+  if(S.clienti.length > 0) return; // non sovrascrivere se ci sono già clienti
+  const lista = [
+    {nome:'3D',ref:'Donato',ind:'Via Gonin, 5C',city:'Torino',tel:''},
+    {nome:'A TUTTO GAS',ref:'Rino',ind:'Via Somalia, 108/21',city:'Torino',tel:'3396062306'},
+    {nome:'AF AUTOSERVICE',ref:'Andrea Ferrara',ind:'Via Cesana, 3',city:'Nichelino',tel:'3491846259'},
+    {nome:'ALBORIAN',ref:'Claudio',ind:'Via Cristalliera, 12',city:'Torino',tel:'3492751724'},
+    {nome:'ALIZZI',ref:'Davide - Agostino',ind:'Via Carlo del Prete, 16',city:'Torino',tel:'3488445988'},
+    {nome:'ALLERA',ref:'Beppe',ind:'Via Sapri, 24',city:'Torino',tel:'3382440984'},
+    {nome:'AMADORI',ref:'Dario',ind:'Via Capriolo, 22',city:'Torino',tel:'3494744525'},
+    {nome:'AMBRICO',ref:'Donato - Andrea',ind:'Via Benedetto Croce, 1',city:'Rivalta',tel:'3337709074'},
+    {nome:'ANDRIOLI',ref:'Luca',ind:'Via Chanoux, 12',city:'Torino',tel:'3472438799'},
+    {nome:'ANDRONICO',ref:'Mario',ind:'Via Giolitti, 12',city:'Orbassano',tel:'3488046099'},
+    {nome:'AUTO 2001',ref:'Gaetano',ind:'Corso Caio Plinio, 22',city:'Torino',tel:'3394146527'},
+    {nome:'AUTO JOLLY',ref:'Giulio - Gabriele',ind:'Via Boston, 79',city:'Torino',tel:'3485137072'},
+    {nome:'AUTO TS',ref:'Luciano',ind:'Via Buenos Aires, 49',city:'Torino',tel:'3357707517'},
+    {nome:'AUTODUEAEMME',ref:'Massimo',ind:'Corso Orbassano, 295',city:'Torino',tel:'3454357955'},
+    {nome:'AUTOFRANCIA',ref:'Beppe',ind:'Corso Telesio, 6',city:'Torino',tel:'3335626065'},
+    {nome:'AUTOFREAM',ref:'Pino',ind:'Via Juglaris, 14',city:'Moncalieri',tel:'3381907192'},
+    {nome:'AUTOIMPERO',ref:'',ind:'Via Fratelli Garrone, 4',city:'Torino',tel:'3316534550'},
+    {nome:'AUTOPOLA',ref:'Marco',ind:'Via Pola, 2',city:'Torino',tel:'3248915458'},
+    {nome:'BACCHINI',ref:'Bacchini',ind:'Corso Galileo Ferraris, 104',city:'Torino',tel:'3777050238'},
+    {nome:'BARANZELLI',ref:'',ind:'Largo Luca della Robbia, 46',city:'Torino',tel:''},
+    {nome:'BERRUTI',ref:'Berruti',ind:'Via Valgioie, 119',city:'Torino',tel:''},
+    {nome:'BIONDOLILLO',ref:'Alessandro',ind:'',city:'Vinovo',tel:'3662854862'},
+    {nome:'BORELLI',ref:'Borelli',ind:'Via San Francesco d\'Assisi, 4',city:'Collegno',tel:'3808609054'},
+    {nome:'BURTACCIO',ref:'Rocco',ind:'Via Frabosa, 10',city:'Torino',tel:'3392291529'},
+    {nome:'BUSSO',ref:'Claudio',ind:'Via Puccini, 5',city:'Moncalieri',tel:'3495920469'},
+    {nome:'CAMPANELLA',ref:'Campanella',ind:'',city:'Torino',tel:'3290999347'},
+    {nome:'CAR SERVICE',ref:'Fabio',ind:'Via Puccini, 35',city:'Moncalieri',tel:'3478894448'},
+    {nome:'CARRANO',ref:'Giuseppe',ind:'',city:'Piobesi',tel:'3475338198'},
+    {nome:'CARROZZERIA CENTRAL',ref:'Central',ind:'',city:'Nichelino',tel:''},
+    {nome:'CARROZZERIA DELLE ALPI',ref:'Giuseppe',ind:'',city:'Nichelino',tel:'3391001101'},
+    {nome:'CARROZZERIA FRATELLI BASILE',ref:'Basile',ind:'',city:'Torino',tel:'3518719242'},
+    {nome:'CARROZZERIA FUTURA',ref:'Tony',ind:'',city:'Moncalieri',tel:'3486419420'},
+    {nome:'CARROZZERIA NANO',ref:'Nano',ind:'',city:'Torino',tel:'3498393518'},
+    {nome:'CASCIANO',ref:'Alfonso',ind:'',city:'Rivoli',tel:'3737225992'},
+    {nome:'CASTO',ref:'Massimo',ind:'Via Lagrange, 10',city:'Moncalieri',tel:''},
+    {nome:'CASULA',ref:'Marco',ind:'Via Sette Comuni, 74',city:'Torino',tel:'3355233941'},
+    {nome:'CAVALLO',ref:'Bruno',ind:'',city:'Torino',tel:'3472620755'},
+    {nome:'CECERE',ref:'Arturo',ind:'Via Monfalcone',city:'Torino',tel:''},
+    {nome:'CHRISTIAN ITALCLIMA',ref:'Christian',ind:'',city:'Torino',tel:'3286935461'},
+    {nome:'CIMONE',ref:'',ind:'Via Postumia, 49',city:'Torino',tel:'3394858518'},
+    {nome:'CIPRICAR',ref:'Cipri',ind:'Via F.lli Bandiera, 31',city:'Nichelino',tel:'3492852145'},
+    {nome:'CLAUDIO ASTI',ref:'Claudio',ind:'',city:'Asti',tel:'3383223166'},
+    {nome:'COLBY',ref:'Paolo',ind:'Strada Castello Mirafiori, 101/5',city:'Torino',tel:'11342085'},
+    {nome:'COLECCHIA',ref:'Sergio',ind:'',city:'Collegno',tel:'3480951182'},
+    {nome:'LEOCAR',ref:'Andrej',ind:'Piazza Barile, 4',city:'Nichelino',tel:''},
+    {nome:'CORDOVANI',ref:'Roberto',ind:'',city:'Torino',tel:'3478351147'},
+    {nome:'CP',ref:'Elio',ind:'',city:'Orbassano',tel:'3939821081'},
+    {nome:'CRAVERO',ref:'Francesco',ind:'',city:'Grugliasco',tel:'3316888054'},
+    {nome:'CRISTOFORI',ref:'Diego',ind:'Via Aosta, 4',city:'Beinasco',tel:'3398208464'},
+    {nome:'CUGINO CHRISTIAN RIVOLI',ref:'',ind:'',city:'Rivoli',tel:''},
+    {nome:'D\'AMICO',ref:'Claudio',ind:'',city:'Torino',tel:'3382068244'},
+    {nome:'DACRICAR',ref:'Fabio',ind:'Via Buffa, 19',city:'Nichelino',tel:''},
+    {nome:'DAMIANO',ref:'Damiano',ind:'',city:'Torino',tel:'3403055863'},
+    {nome:'DAVIDE AUTOCROCETTA',ref:'Davide',ind:'Via Canova, 6B',city:'Nichelino',tel:'3472919110'},
+    {nome:'DE.CAR',ref:'',ind:'Strada della Pronda, 81',city:'Torino',tel:''},
+    {nome:'DENNIS CAR',ref:'Dennis',ind:'',city:'Moncalieri',tel:'3931253350'},
+    {nome:'DIESSEMOTORS',ref:'Enzo Barcellona',ind:'Via Trento 6/9',city:'Nichelino',tel:'3317405196'},
+    {nome:'DOMENICO MEAT',ref:'Domenico',ind:'',city:'Torino',tel:'3383711280'},
+    {nome:'DORIA',ref:'Luigi',ind:'Via Gorizia',city:'Torino',tel:''},
+    {nome:'DP GARAGE',ref:'Gianluca - Alessandro',ind:'Via dei Martiri, 19',city:'Nichelino',tel:'3426404402'},
+    {nome:'DOTTOR GAS',ref:'Roberto',ind:'Via Passo Buole, 12',city:'Torino',tel:'3383620793'},
+    {nome:'ELETTRAUTO CORSO',ref:'Corso',ind:'',city:'Moncalieri',tel:''},
+    {nome:'ELETTRAUTO VITERBO',ref:'Tommaso',ind:'Via Somalia 108/34',city:'Torino',tel:'3496060244'},
+    {nome:'ELETTROCAR',ref:'Paolo - Fabrizio',ind:'Strada Nazionale, 62/A',city:'Cambiano',tel:'3393096810'},
+    {nome:'ENZO',ref:'',ind:'Via Borgone',city:'Torino',tel:'3383106141'},
+    {nome:'ESSEBICAR',ref:'',ind:'Via G. Piazzi, 26',city:'Torino',tel:''},
+    {nome:'EUGENIO',ref:'Eugenio',ind:'',city:'Torino',tel:'3292420745'},
+    {nome:'EUROCAR',ref:'Diego',ind:'Via La Thuille',city:'Torino',tel:''},
+    {nome:'F2 MOTORS',ref:'Franco - Fabrizio',ind:'Via Barbaresco, 5/F',city:'Torino',tel:'3928570596'},
+    {nome:'FATAM',ref:'Sergio',ind:'',city:'Torino',tel:'3471351645'},
+    {nome:'FCS DOMENICO ITALCLIMA',ref:'Domenico',ind:'',city:'Orbassano',tel:'3382471264'},
+    {nome:'FCS ORBASSANO',ref:'Gianluca',ind:'',city:'Orbassano',tel:'3317664956'},
+    {nome:'FERRARA',ref:'Franco - Valentino',ind:'Via Spanò, 133',city:'Torino',tel:'3480843164'},
+    {nome:'FERRERO DARIO',ref:'',ind:'Strada Torino, 1',city:'Moncalieri',tel:'3396923926'},
+    {nome:'FERRO SANTENA',ref:'Fabio - Mauro',ind:'Via Minocchio, 16',city:'Santena',tel:'3488542630'},
+    {nome:'FERRO TORINO',ref:'Mauri',ind:'Via Millefonti, 11',city:'Torino',tel:'3929818890'},
+    {nome:'FIDELIO',ref:'Mario',ind:'Via Sacra S.Michele, 2',city:'Torino',tel:'3291649284'},
+    {nome:'FREDDI FEDERICO NICHELINO',ref:'Federico',ind:'Via Avogadro, 6',city:'Nichelino',tel:'3382952084'},
+    {nome:'GALFIONE',ref:'Massimiliano',ind:'Strada Virle, 8',city:'Carignano',tel:'3317751035'},
+    {nome:'GALLINA',ref:'Pino - Lorenzo',ind:'Via Colombetto, 7',city:'Nichelino',tel:'3489337942'},
+    {nome:'GEREMIA',ref:'Geremia',ind:'Via Vigone, 62/C',city:'Torino',tel:'3470106276'},
+    {nome:'GHIANO',ref:'Paolo',ind:'Via F.lli Rosselli, 9',city:'Vigone',tel:''},
+    {nome:'GHIRO',ref:'Marcello',ind:'Via Pastrengo, 3',city:'Moncalieri',tel:''},
+    {nome:'GIACOMO',ref:'',ind:'Via Arduino, 23',city:'',tel:''},
+    {nome:'GIANNI FURGONISTA',ref:'Gianni',ind:'Piazza Pitagora',city:'Torino',tel:'3314738514'},
+    {nome:'GIGI AUTORIPARAZIONI',ref:'Gigi',ind:'Via Tirreno, 155/14',city:'Torino',tel:'3470892034'},
+    {nome:'GIGI CAR',ref:'Gigi',ind:'',city:'Moncalieri',tel:'3487920661'},
+    {nome:'GIOVANNINI',ref:'Andrea',ind:'Via Lando Conti, 9',city:'Nichelino',tel:'3282699234'},
+    {nome:'GIOVANNINO BARCELLONA',ref:'Giovanni',ind:'Via Galileo Galilei, 11',city:'Nichelino',tel:'3880417990'},
+    {nome:'GIOVINE',ref:'',ind:'Piazza Moncenisio',city:'Torino',tel:'3335639740'},
+    {nome:'GRAZIOLI',ref:'Pietro',ind:'Via Gorizia, 196',city:'Torino',tel:'3921565683'},
+    {nome:'GRIGATTI',ref:'Eolo',ind:'Strada Genova, 34',city:'Moncalieri',tel:'3317931828'},
+    {nome:'GUGLIELMINETTI',ref:'',ind:'Via Guglielminetti, 11',city:'Torino',tel:''},
+    {nome:'GULLI',ref:'Cosimo',ind:'Via Ronchi, 29',city:'La Loggia',tel:'3666143692'},
+    {nome:'IANNUZZI',ref:'Domenico',ind:'Via Stelvio, 6',city:'Torino',tel:'3920621211'},
+    {nome:'IL AUTO',ref:'',ind:'Via Issiglio, 129',city:'Torino',tel:'11386394'},
+    {nome:'IMPALLARIA',ref:'Nicolò',ind:'Via 25 Febbraio, 19',city:'Nichelino',tel:'3385895394'},
+    {nome:'ITALCLIMA',ref:'Michele - Marcello',ind:'Via Luigi Palma di Cesnola, 87',city:'Torino',tel:'3284841871'},
+    {nome:'LA VECCHIA',ref:'Ezio',ind:'Via Benvenuto Cellini, 20',city:'Nichelino',tel:'3475980085'},
+    {nome:'LA VEGLIA',ref:'Michele',ind:'Via Quarino, 4',city:'Chieri',tel:'3477692282'},
+    {nome:'LB NICHELINO',ref:'Enzo',ind:'Via D\'Azeglio, 19',city:'Nichelino',tel:'3931599542'},
+    {nome:'LIGORIO',ref:'Franco',ind:'Via Zara, 15',city:'Moncalieri',tel:'3472661164'},
+    {nome:'LUCA FRANCESCONI',ref:'Luca',ind:'',city:'Torino',tel:'3398509343'},
+    {nome:'LUCA TROFARELLO',ref:'Luca',ind:'Via Sabbioni, 10',city:'Trofarello',tel:'3478786414'},
+    {nome:'LUCETTI',ref:'Luciano',ind:'Via Montessori, 4',city:'Nichelino',tel:'3494423825'},
+    {nome:'LUSITANO',ref:'Christian',ind:'Via Flecchia, 4',city:'Torino',tel:'3496415372'},
+    {nome:'MARTORANA',ref:'',ind:'',city:'Collegno',tel:''},
+    {nome:'MAUGERI',ref:'Antonio',ind:'Via Cavalieri del Lavoro, 8',city:'Moncalieri',tel:'3478057600'},
+    {nome:'MB TORINO',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'MEL.CAR',ref:'Marco',ind:'Via Candiolo, 34',city:'Torino',tel:'3492246314'},
+    {nome:'MG AUTO JOIS',ref:'',ind:'Via Marsala, 16',city:'Moncalieri',tel:'3934583423'},
+    {nome:'MG CAR',ref:'Michele',ind:'',city:'Torino',tel:'3382457091'},
+    {nome:'MIMMOCAR',ref:'Mimmo',ind:'Via Sestriere, 34',city:'Moncalieri',tel:'3936361056'},
+    {nome:'MITTICA',ref:'Beppe',ind:'Via Reymond, 11',city:'Torino',tel:'3357566147'},
+    {nome:'MP',ref:'',ind:'Via Buenos Aires, 6',city:'Torino',tel:''},
+    {nome:'MRA',ref:'',ind:'',city:'Collegno',tel:''},
+    {nome:'NATALE',ref:'',ind:'',city:'Rivoli',tel:''},
+    {nome:'NEIROTTI',ref:'Marco',ind:'Via Ventimiglia, 167',city:'',tel:'3494703487'},
+    {nome:'NICOLAS',ref:'',ind:'Strada Stupinigi, 7',city:'Moncalieri',tel:''},
+    {nome:'NORICAR',ref:'Mauro',ind:'',city:'Cambiano',tel:''},
+    {nome:'NUOVA BREDA',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'OK AUTOSERVICE',ref:'',ind:'Via Capelli, 2',city:'Torino',tel:''},
+    {nome:'PASSO DEL BRENNERO',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'PASTRENGO',ref:'Mimmo',ind:'',city:'Moncalieri',tel:''},
+    {nome:'PERRONE',ref:'Pino',ind:'',city:'Torino',tel:'3408443611'},
+    {nome:'PIGNATARO',ref:'Franco',ind:'',city:'Collegno',tel:''},
+    {nome:'PINAUTO',ref:'Pino',ind:'',city:'Vinovo',tel:''},
+    {nome:'PINO DANIELE',ref:'Pino - Daniele',ind:'',city:'Torino',tel:'3475462999'},
+    {nome:'PINO STELLA',ref:'Pino',ind:'',city:'Torino',tel:''},
+    {nome:'PIT GARAGE',ref:'Garino',ind:'',city:'',tel:''},
+    {nome:'PN MOTORI',ref:'Emiliano',ind:'',city:'Volvera',tel:''},
+    {nome:'PONZIO NONE',ref:'',ind:'',city:'None',tel:''},
+    {nome:'PRENCIPE',ref:'Nicola',ind:'',city:'Nichelino',tel:''},
+    {nome:'PRONDA',ref:'Filippo',ind:'',city:'Torino',tel:''},
+    {nome:'QUITADAMO',ref:'',ind:'',city:'Orbassano',tel:''},
+    {nome:'RANCAR',ref:'',ind:'',city:'Torino',tel:'3349499600'},
+    {nome:'RD NICHELINO',ref:'',ind:'',city:'Nichelino',tel:''},
+    {nome:'RD TORINO',ref:'Luciano',ind:'Via Monti, 4',city:'Torino',tel:'3358064369'},
+    {nome:'REGINA',ref:'Liborio',ind:'',city:'Torino',tel:'3483740830'},
+    {nome:'RINALDO',ref:'',ind:'',city:'Nichelino',tel:''},
+    {nome:'ROCCO 2001',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'ROMANO',ref:'Giuseppe',ind:'',city:'Torino',tel:'3336126262'},
+    {nome:'ROSSI PECETTO',ref:'',ind:'',city:'Pecetto',tel:''},
+    {nome:'SAN SILVESTRO',ref:'',ind:'',city:'Torino',tel:'3474244804'},
+    {nome:'SANNA',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'SCALERANDI',ref:'',ind:'',city:'Scalenghe',tel:''},
+    {nome:'SERVICE CAR PEUGEOT',ref:'',ind:'Via F.lli Garrone, 4',city:'Torino',tel:''},
+    {nome:'SIMPLEX',ref:'',ind:'Via Tripoli, 128',city:'Torino',tel:''},
+    {nome:'STELLA',ref:'',ind:'Via Sette Comuni, 24',city:'Torino',tel:''},
+    {nome:'STRADA',ref:'',ind:'',city:'Carignano',tel:''},
+    {nome:'TECNICA DELL\'AUTO',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'TEKNOMOTOR RIVALTA',ref:'',ind:'',city:'Rivalta',tel:''},
+    {nome:'TEKNOMOTOR TORINO',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'TENORE',ref:'',ind:'',city:'',tel:''},
+    {nome:'TERZULLI',ref:'',ind:'Via Genola, 21',city:'Torino',tel:''},
+    {nome:'TIRELLI',ref:'Carlo',ind:'',city:'Avigliana',tel:'3358248421'},
+    {nome:'TOFFANO',ref:'',ind:'Via Circonvallazione km 15,970',city:'Orbassano',tel:''},
+    {nome:'TONY CORAGGIO',ref:'',ind:'Via Caraglio, 32',city:'Torino',tel:''},
+    {nome:'TRINCONE',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'VALEGGIO',ref:'Gianni',ind:'Via Valeggio, 10',city:'Torino',tel:'3467396590'},
+    {nome:'VALEGGIO AUTORIMESSA',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'VEMA MATTEO',ref:'Matteo',ind:'Strada Antica di Grugliasco, 308',city:'Torino',tel:'3498722100'},
+    {nome:'VIBERTI-CAGNAZZI',ref:'Mauro - Gioacchino',ind:'Via Planteri, 19',city:'Torino',tel:''},
+    {nome:'VILLA GIUSTI',ref:'',ind:'Via Villa Giusti 56/B',city:'Torino',tel:''},
+    {nome:'VINCI MOTORSPORT',ref:'',ind:'Via L. Da Vinci, 8',city:'Nichelino',tel:''},
+    {nome:'VIP SERVICE',ref:'',ind:'',city:'Moncalieri',tel:''},
+    {nome:'VL MOTORS',ref:'',ind:'Via Capriolo',city:'Torino',tel:''},
+    {nome:'ZACCARIA',ref:'',ind:'',city:'Nichelino',tel:''},
+    {nome:'ZUCCO',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'ZUMBO',ref:'',ind:'',city:'Orbassano',tel:'3395074245'},
+    {nome:'ZURLO ALDO',ref:'',ind:'',city:'Torino',tel:''},
+    {nome:'ZURLO IPERBIMBO',ref:'Nando',ind:'',city:'',tel:''},
+  ];
+  lista.forEach(c=>{ S.clienti.push({id:Date.now()+Math.random(),nome:c.nome,ref:c.ref,tel:c.tel,ind:c.ind,city:c.city,note:''}); });
+  save(); render();
+}
+
+
+</script>
+</body>
+</html>
