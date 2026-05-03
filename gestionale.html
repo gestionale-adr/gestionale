@@ -109,6 +109,7 @@
   .b-amber{background:var(--amber2);color:var(--amber3);border:1px solid #E0C060}
   .b-gray{background:#EEF0F8;color:#5A6080;border:1px solid #C8CCE0}
   .b-pink{background:var(--pink2);color:var(--pink);border:1px solid #F090C0}
+  .b-orange{background:#FEF3E2;color:#d35400;border:1px solid #F0A060}
   .b-purple{background:var(--purple2);color:var(--purple);border:1px solid #C090F0}
 
   /* LAYOUT */
@@ -169,17 +170,55 @@
     .main{padding:0;max-width:100%}
     .section{display:block!important}
     .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid}
-    #sec-ritiri{display:block!important}
     input[type=checkbox]{-webkit-appearance:checkbox;appearance:checkbox}
   }
 </style>
 </head>
 <body>
 
+  <div id="nr-overlay" onclick="chiudiNuovoReso()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="nr-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(820px,96vw);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:16px;font-weight:700;color:var(--purple)">Registra reso / difettoso / non conforme</div>
+      <button onclick="chiudiNuovoReso()" class="btn" style="padding:4px 10px">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="field" style="max-width:120px"><label>Codice</label><input id="r-cod" placeholder=""></div>
+      <div class="field" style="flex:2"><label>Descrizione</label><input id="r-desc" placeholder="Nome articolo"></div>
+      <div class="field"><label>Fornitore</label><select id="r-for"></select></div>
+      <div class="field"><label>Cliente (se da ritirare)</label><select id="r-cli-rc"></select></div>
+      <div class="field"><label>Valore unitario €</label><input id="r-val" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:90px"><label>Qtà</label><input id="r-qty" type="number" value="1" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="flex:2"><label>Tipo</label>
+        <select id="r-tipo">
+          <option value="garanzia">Difettoso – garanzia riconosciuta</option>
+          <option value="nogaranzia">Difettoso – garanzia NON riconosciuta (noi paghiamo)</option>
+          <option value="nonconforme">Non conforme – scalato dal debito fornitore</option>
+        </select>
+      </div>
+      <div class="field"><label>Note</label><input id="r-note" placeholder=""></div>
+      <div class="field" style="max-width:155px"><label>Data</label><input id="r-data" type="date"></div>
+      <div class="field" style="max-width:160px;display:flex;align-items:flex-end;gap:8px;padding-bottom:4px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--green3)">
+          <input type="checkbox" id="r-ritirato" style="width:16px;height:16px;accent-color:var(--green3)">
+          Già ritirato dal cliente
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem">
+      <button class="btn cancel" onclick="chiudiNuovoReso()">Annulla</button>
+      <button class="btn primary" onclick="addReso()">+ Registra</button>
+    </div>
+  </div>
+
+  <!-- MODAL MODIFICA RESO -->
 <header>
   <div class="logo">GESTIONALE</div>
-  <div style="display:flex;align-items:center;gap:12px">
+  <div style="display:flex;align-items:center;gap:10px">
     <div id="drive-status"></div>
+    <button onclick="resetTuttiIDati()" style="padding:5px 12px;font-size:11px;font-weight:600;border:1.5px solid #c0392b;background:#fff;color:#c0392b;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif" title="Azzera solo i dati contabili">🗑 Reset dati</button>
     <div class="date-badge" id="oggi"></div>
   </div>
 </header>
@@ -198,12 +237,11 @@
 <nav class="nav">
   <button class="nav-btn active" onclick="T('vendite')">Vendite</button>
   <button class="nav-btn" onclick="T('uscite')">Spese</button>
-  <button class="nav-btn" onclick="T('resi')">Resi / Difettosi</button>
+  <button class="nav-btn" onclick="T('resi')">Difettosi / Non conformi</button>
   <button class="nav-btn" onclick="T('acconti')">Acconti</button>
   <button class="nav-btn" onclick="T('riepilogo')">Riepilogo mese</button>
   <button class="nav-btn" onclick="T('storico')">Storico mesi</button>
   <button class="nav-btn" onclick="T('debitiFor')">Debiti fornitori</button>
-  <button class="nav-btn" onclick="T('ritiri')">Ritiri da gestire</button>
   <button class="nav-btn" onclick="T('insoluti')">Insoluti clienti</button>
   <button class="nav-btn" onclick="T('resiClienti')">Resi clienti</button>
   <button class="nav-btn" onclick="T('soldiInMano')">Soldi in mano ai soci</button>
@@ -213,6 +251,56 @@
 
 <!-- VENDITE -->
 <div id="sec-vendite" class="section active">
+
+  <!-- MODAL NUOVA VENDITA -->
+  <div id="nv-overlay" onclick="chiudiNuovaVendita()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="nv-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(860px,96vw);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:16px;font-weight:700;color:var(--accent3)" id="v-form-title">Nuova vendita</div>
+      <button onclick="chiudiNuovaVendita()" class="btn" style="padding:4px 10px">✕</button>
+    </div>
+    <div class="editing-banner" id="v-edit-banner">Stai modificando una vendita esistente</div>
+    <div class="form-row">
+      <div class="field" style="max-width:155px"><label>Data vendita</label><input id="v-data" type="date"></div>
+      <div class="field" style="flex:1.4;min-width:130px"><label>Cliente</label>
+        <div class="autocomplete-wrap" id="ac-wrap">
+          <input id="v-cli-txt" placeholder="Scrivi per cercare..." autocomplete="off"
+            oninput="acFilter()" onkeydown="acKey(event)" onfocus="acFilter()" onblur="acBlur()">
+          <input type="hidden" id="v-cli">
+          <div class="ac-dropdown" id="ac-list"></div>
+        </div>
+      </div>
+      <div class="field" style="flex:1.4;min-width:130px"><label>Articolo</label>
+        <div class="autocomplete-wrap" id="art-ac-wrap">
+          <input id="v-art" placeholder="Nome articolo" autocomplete="off"
+            oninput="artAcFilter()" onkeydown="artAcKey(event)" onfocus="artAcFilter()" onblur="artAcBlur()">
+          <div class="ac-dropdown" id="art-ac-list"></div>
+        </div>
+      </div>
+      <div class="field" style="flex:1.8;min-width:180px"><label>Fornitore</label><select id="v-for"></select></div>
+      <div class="field"><label>Costo acquisto €</label><input id="v-costo" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field"><label>Prezzo vendita €</label><input id="v-prez" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:80px"><label>Qtà</label><input id="v-qty" type="number" value="1" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="max-width:110px"><label>Codice</label><input id="v-cod" placeholder="ART001"></div>
+      <div class="field"><label>IVA</label><select id="v-iva"><option value="0">Esente IVA</option><option value="22">22%</option></select></div>
+      <div class="field"><label>Ricondizionato</label><select id="v-ricond"><option value="">— seleziona —</option><option value="no">No</option><option value="si">Sì – da ritirare</option><option value="campione">A CAMPIONE</option></select></div>
+      <div class="field"><label>Pagamento</label><select id="v-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
+      <div class="field"><label>Stato</label><select id="v-stato" onchange="toggleAcconto()"><option value="nonpagato">Non pagato</option><option value="pagato">Pagato</option><option value="acconto">Acconto</option></select></div>
+      <div class="field hidden" id="acc-wrap"><label>Acconto ricevuto €</label><input id="v-acconto" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="form-row">
+      <div class="field" style="max-width:160px"><label>Note</label><input id="v-note" placeholder=""></div>
+    </div>
+    <input type="hidden" id="v-edit-id" value="">
+    <input type="hidden" id="v-socio" value="Ciro">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem">
+      <button class="btn cancel" id="v-cancel-btn" onclick="cancelEditVendita()" style="display:none">Annulla modifica</button>
+      <button class="btn" onclick="svuotaCampiVendita()" style="background:var(--orange2);color:var(--orange);border-color:#F0B080;font-weight:600">Svuota campi</button>
+      <button class="btn primary" id="v-submit-btn" onclick="submitVendita()">+ Registra vendita</button>
+    </div>
+  </div>
 
   <!-- MODAL MODIFICA VENDITA -->
   <div id="vm-overlay" onclick="chiudiModalVendita()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;backdrop-filter:blur(2px)"></div>
@@ -242,7 +330,7 @@
     </div>
     <div class="form-row">
       <div class="field"><label>IVA</label><select id="vm-iva"><option value="0">Esente IVA</option><option value="22">22%</option></select></div>
-      <div class="field"><label>Ricondizionato</label><select id="vm-ricond"><option value="no">No</option><option value="si">Sì – da ritirare</option></select></div>
+      <div class="field"><label>Ricondizionato</label><select id="vm-ricond"><option value="no">No</option><option value="si">Sì – da ritirare</option><option value="campione">A CAMPIONE</option></select></div>
       <div class="field"><label>Pagamento</label><select id="vm-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
       <div class="field"><label>Stato</label><select id="vm-stato" onchange="vmToggleAcconto()"><option value="nonpagato">Non pagato</option><option value="pagato">Pagato</option><option value="acconto">Acconto</option></select></div>
       <div class="field hidden" id="vm-acc-wrap"><label>Acconto €</label><input id="vm-acconto" type="number" step="0.01" placeholder="0.00"></div>
@@ -256,51 +344,13 @@
       <button class="btn primary" onclick="salvaModalVendita()">Salva modifiche</button>
     </div>
   </div>
-  <div class="card">
-    <div class="card-title" id="v-form-title">Nuova vendita</div>
-    <div class="editing-banner" id="v-edit-banner">Stai modificando una vendita esistente</div>
-    <div class="form-row">
-      <div class="field" style="max-width:155px"><label>Data vendita</label><input id="v-data" type="date"></div>
-      <div class="field" style="flex:1.4;min-width:130px"><label>Cliente</label>
-        <div class="autocomplete-wrap" id="ac-wrap">
-          <input id="v-cli-txt" placeholder="Scrivi per cercare..." autocomplete="off"
-            oninput="acFilter()" onkeydown="acKey(event)" onfocus="acFilter()" onblur="acBlur()">
-          <input type="hidden" id="v-cli">
-          <div class="ac-dropdown" id="ac-list"></div>
-        </div>
-      </div>
-      <div class="field" style="flex:1.4;min-width:130px"><label>Articolo</label>
-        <div class="autocomplete-wrap" id="art-ac-wrap">
-          <input id="v-art" placeholder="Nome articolo" autocomplete="off"
-            oninput="artAcFilter()" onkeydown="artAcKey(event)" onfocus="artAcFilter()" onblur="artAcBlur()">
-          <div class="ac-dropdown" id="art-ac-list"></div>
-        </div>
-      </div>
-      <div class="field" style="flex:1.8;min-width:180px"><label>Fornitore</label><select id="v-for"></select></div>
-      <div class="field"><label>Costo acquisto €</label><input id="v-costo" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="field"><label>Prezzo vendita €</label><input id="v-prez" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="field" style="max-width:80px"><label>Qtà</label><input id="v-qty" type="number" value="1" min="1"></div>
-    </div>
-    <div class="form-row">
-      <div class="field" style="max-width:110px"><label>Codice</label><input id="v-cod" placeholder="ART001"></div>
-      <div class="field"><label>IVA</label><select id="v-iva"><option value="0">Esente IVA</option><option value="22">22%</option></select></div>
-      <div class="field"><label>Ricondizionato</label><select id="v-ricond"><option value="">— seleziona —</option><option value="no">No</option><option value="si">Sì – da ritirare</option></select></div>
-      <div class="field"><label>Pagamento</label><select id="v-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
-      <div class="field"><label>Stato</label><select id="v-stato" onchange="toggleAcconto()"><option value="nonpagato">Non pagato</option><option value="pagato">Pagato</option><option value="acconto">Acconto</option></select></div>
-      <div class="field hidden" id="acc-wrap"><label>Acconto ricevuto €</label><input id="v-acconto" type="number" step="0.01" placeholder="0.00"></div>
-    </div>
-    <div class="form-row">
-      <div class="field" style="max-width:160px"><label>Note</label><input id="v-note" placeholder=""></div>
-      <button class="btn primary" id="v-submit-btn" onclick="submitVendita()">+ Registra vendita</button>
-      <button class="btn cancel" id="v-cancel-btn" onclick="cancelEditVendita()" style="display:none">Annulla modifica</button>
-      <button class="btn" onclick="svuotaCampiVendita()" style="background:var(--orange2);color:var(--orange);border-color:#F0B080;font-weight:600" title="Cancella tutti i campi">Svuota campi</button>
-    </div>
-    <input type="hidden" id="v-edit-id" value="">
-    <input type="hidden" id="v-socio" value="Ciro">
-  </div>
+
   <div style="display:flex;gap:1rem;align-items:flex-start">
     <div class="card" style="flex:1;min-width:0">
-      <div class="card-title">Vendite del mese</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="card-title" style="margin:0">Vendite del mese</div>
+        <button onclick="apriNuovaVendita()" style="padding:9px 22px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;box-shadow:0 3px 10px rgba(39,174,96,0.4);letter-spacing:0.3px">＋ Aggiungi vendita</button>
+      </div>
       <div class="table-wrap"><table>
         <thead><tr><th>Data</th><th>Cliente</th><th>Articolo</th><th>Codice</th><th style="color:var(--red3)">Prezzo da pagare</th><th style="color:var(--green3)">Prezzo pagato</th><th style="color:var(--green3)">Pagato</th><th>Incassato da</th><th>Costo</th><th class="tbl-azioni">Azioni</th></tr></thead>
         <tbody id="tbl-v"></tbody>
@@ -322,6 +372,43 @@
 
 <!-- SPESE -->
 <div id="sec-uscite" class="section">
+
+  <!-- MODAL NUOVA SPESA -->
+  <div id="nu-overlay" onclick="chiudiNuovaSpesa()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="nu-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(820px,96vw);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:16px;font-weight:700;color:var(--red3)">Registra spesa</div>
+      <button onclick="chiudiNuovaSpesa()" class="btn" style="padding:4px 10px">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="field" style="max-width:160px"><label>Data</label><input id="u-data" type="date"></div>
+      <div class="field" style="max-width:280px"><label>Spesa</label>
+        <select id="u-cat" onchange="toggleUscita()">
+          <option value="">— seleziona spesa —</option>
+          <option value="fornitore">Pagamento fornitore</option>
+          <option value="stipendio_carmen">Stipendio Carmen</option>
+          <option value="benzina">Benzina</option>
+          <option value="beppe">Compenso Beppe</option>
+          <option value="altro">Altro</option>
+        </select>
+      </div>
+      <div class="field" id="u-for-wrap" style="max-width:260px"><label>Fornitore</label><select id="u-for"></select></div>
+      <div class="field" style="max-width:150px"><label>Importo €</label><input id="u-imp" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:180px"><label>Modalità pagamento</label><select id="u-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
+      <div class="field" style="max-width:190px"><label>Pagato da</label>
+        <select id="u-socio">
+          <option value="">— seleziona —</option>
+          <option value="Entrambi">Entrambi (50/50)</option>
+          <option value="Ciro">Ciro</option>
+          <option value="Gigi">Gigi</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem">
+      <button class="btn cancel" onclick="chiudiNuovaSpesa()">Annulla</button>
+      <button class="btn primary" onclick="addUscita()">+ Registra spesa</button>
+    </div>
+  </div>
 
   <!-- MODAL MODIFICA SPESA -->
   <div id="um-overlay" onclick="chiudiModalUscita()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;backdrop-filter:blur(2px)"></div>
@@ -356,36 +443,12 @@
       <button class="btn primary" onclick="salvaModalUscita()">Salva modifiche</button>
     </div>
   </div>
+
   <div class="card">
-    <div class="card-title">Registra spesa</div>
-    <div class="form-row">
-      <div class="field" style="max-width:160px"><label>Data</label><input id="u-data" type="date"></div>
-      <div class="field" style="max-width:280px"><label>Spesa</label>
-        <select id="u-cat" onchange="toggleUscita()">
-          <option value="">— seleziona spesa —</option>
-          <option value="fornitore">Pagamento fornitore</option>
-          <option value="stipendio_carmen">Stipendio Carmen</option>
-          <option value="benzina">Benzina</option>
-          <option value="beppe">Compenso Beppe</option>
-          <option value="altro">Altro</option>
-        </select>
-      </div>
-      <div class="field" id="u-for-wrap" style="max-width:260px"><label>Fornitore</label><select id="u-for"></select></div>
-      <div class="field" style="max-width:150px"><label>Importo €</label><input id="u-imp" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="field" style="max-width:180px"><label>Modalità pagamento</label><select id="u-pag"><option value="contanti">Contanti</option><option value="bonifico">Bonifico</option></select></div>
-      <div class="field" style="max-width:190px"><label>Pagato da</label>
-        <select id="u-socio">
-          <option value="">— seleziona —</option>
-          <option value="Entrambi">Entrambi (50/50)</option>
-          <option value="Ciro">Ciro</option>
-          <option value="Gigi">Gigi</option>
-        </select>
-      </div>
-      <button class="btn primary" style="align-self:flex-end" onclick="addUscita()">+ Registra</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="card-title" style="margin:0">Spese del mese</div>
+      <button onclick="apriNuovaSpesa()" style="padding:9px 22px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;box-shadow:0 3px 10px rgba(192,57,43,0.4);letter-spacing:0.3px">＋ Aggiungi spesa</button>
     </div>
-  </div>
-  <div class="card">
-    <div class="card-title">Spese del mese</div>
     <div class="table-wrap"><table>
       <thead><tr><th>Data</th><th>Spesa</th><th>Importo</th><th>Modalità</th><th>Pagato da</th><th></th></tr></thead>
       <tbody id="tbl-u"></tbody>
@@ -395,30 +458,55 @@
 
 <!-- RESI -->
 <div id="sec-resi" class="section">
-  <div class="card">
-    <div class="card-title">Registra reso / articolo difettoso</div>
+
+  <!-- MODAL NUOVO RESO -->
+  <div id="mr-overlay" onclick="chiudiModalReso()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;backdrop-filter:blur(2px)"></div>
+  <div id="mr-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:1.5rem;width:min(820px,96vw);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem">
+      <div style="font-size:16px;font-weight:700;color:var(--purple)">Modifica reso / difettoso / non conforme</div>
+      <button onclick="chiudiModalReso()" class="btn" style="padding:4px 10px">✕</button>
+    </div>
     <div class="form-row">
-      <div class="field" style="max-width:120px"><label>Codice</label><input id="r-cod" placeholder=""></div>
-      <div class="field" style="flex:2"><label>Descrizione</label><input id="r-desc" placeholder="Nome articolo"></div>
-      <div class="field"><label>Fornitore</label><select id="r-for"></select></div>
-      <div class="field"><label>Valore unitario €</label><input id="r-val" type="number" step="0.01" placeholder="0.00"></div>
-      <div class="field" style="max-width:90px"><label>Qtà</label><input id="r-qty" type="number" value="1" min="1"></div>
+      <div class="field" style="max-width:120px"><label>Codice</label><input id="mr-cod" placeholder=""></div>
+      <div class="field" style="flex:2"><label>Descrizione</label><input id="mr-desc" placeholder="Nome articolo"></div>
+      <div class="field"><label>Fornitore</label><select id="mr-for"></select></div>
+      <div class="field"><label>Cliente (se da ritirare)</label><select id="mr-cli"></select></div>
+      <div class="field"><label>Valore unitario €</label><input id="mr-val" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="field" style="max-width:90px"><label>Qtà</label><input id="mr-qty" type="number" value="1" min="1"></div>
     </div>
     <div class="form-row">
       <div class="field" style="flex:2"><label>Tipo</label>
-        <select id="r-tipo">
-          <option value="ricondizionato">Ricondizionato – reso a fornitore</option>
+        <select id="mr-tipo">
           <option value="garanzia">Difettoso – garanzia riconosciuta</option>
           <option value="nogaranzia">Difettoso – garanzia NON riconosciuta (noi paghiamo)</option>
+          <option value="nonconforme">Non conforme – scalato dal debito fornitore</option>
         </select>
       </div>
-      <div class="field"><label>Note</label><input id="r-note" placeholder=""></div>
-      <div class="field" style="max-width:155px"><label>Data</label><input id="r-data" type="date"></div>
-      <button class="btn primary" onclick="addReso()">+ Registra</button>
+      <div class="field"><label>Note</label><input id="mr-note" placeholder=""></div>
+      <div class="field" style="max-width:155px"><label>Data</label><input id="mr-data" type="date"></div>
+      <div class="field" style="max-width:160px;display:flex;align-items:flex-end;gap:8px;padding-bottom:4px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;color:var(--green3)">
+          <input type="checkbox" id="mr-ritirato" style="width:16px;height:16px;accent-color:var(--green3)">
+          Già ritirato dal cliente
+        </label>
+      </div>
+    </div>
+    <input type="hidden" id="mr-id">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem">
+      <button class="btn cancel" onclick="chiudiModalReso()">Annulla</button>
+      <button class="btn primary" onclick="salvaModalReso()">Salva modifiche</button>
     </div>
   </div>
+
   <div class="card">
-    <div class="card-title">Resi del mese</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="card-title" style="margin:0">Resi / Difettosi / Non conformi del mese</div>
+      <div style="display:flex;gap:8px">
+
+        <button onclick="apriNuovoReso('garanzia')" style="padding:8px 16px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;box-shadow:0 3px 8px rgba(192,57,43,0.4)">⚠ Aggiungi difettoso</button>
+        <button onclick="apriNuovoReso('nonconforme')" style="padding:8px 16px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#7d3c98,#9b59b6);color:#fff;box-shadow:0 3px 8px rgba(125,60,152,0.4)">✗ Aggiungi non conforme</button>
+      </div>
+    </div>
     <div class="table-wrap"><table>
       <thead><tr><th>Data</th><th>Codice</th><th>Articolo</th><th>Fornitore</th><th>Cliente</th><th>Valore</th><th>Qtà</th><th>Totale</th><th>Tipo</th><th>Effetto</th><th>Stato/Note</th><th></th></tr></thead>
       <tbody id="tbl-r"></tbody>
@@ -512,6 +600,19 @@
 </div>
 
 <!-- FORNITORI -->
+<!-- MODAL DEBITI VECCHI -->
+<div id="dv-overlay" onclick="chiudiGestioneDebitiVecchi()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000"></div>
+<div id="dv-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(820px,96vw);max-height:88vh;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.25);z-index:2001;overflow:hidden;flex-direction:column">
+  <div style="padding:18px 22px 14px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,var(--purple2),#F5EEFF);flex-shrink:0">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:17px;font-weight:700;color:var(--purple)">🗂 Gestisci debiti vecchi per mese</div>
+      <button class="btn cancel" onclick="chiudiGestioneDebitiVecchi()" style="font-size:16px;padding:3px 10px">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px">Inserisci o modifica il debito pregresso per ogni fornitore e ogni mese</div>
+  </div>
+  <div id="dv-body" style="padding:20px 22px;overflow-y:auto;max-height:calc(88vh - 100px)"></div>
+</div>
+
 <div id="sec-fornitori" class="section">
 
   <!-- MODAL RESOCONTO FORNITORE -->
@@ -571,6 +672,9 @@
   </div>
   <div class="card">
     <div class="card-title">Situazione fornitori – mese attivo</div>
+    <div style="margin-bottom:10px">
+      <button onclick="apriGestioneDebitiVecchi()" style="padding:8px 18px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#7d3c98,#9b59b6);color:#fff;box-shadow:0 3px 10px rgba(125,60,152,0.4)">🗂 Gestisci debiti vecchi per mese</button>
+    </div>
     <div style="margin-bottom:10px;padding:9px 14px;background:var(--purple2);border:1.5px solid var(--purple);border-radius:var(--radius-sm);font-size:12px;color:var(--purple);font-weight:600;display:flex;align-items:center;gap:8px">
       <span>🟣</span>
       <span>La colonna <strong>Debito vecchio €</strong> (viola) è separata dal saldo del mese. Inserisci manualmente l'importo per ciascun fornitore nel mese attivo. Il valore viene salvato per ogni fornitore e ogni mese individualmente.</span>
@@ -620,43 +724,6 @@
 </div>
 
 <!-- ARTICOLI RICONDIZIONATI DA RITIRARE -->
-<div id="sec-ritiri" class="section">
-  <div class="card">
-    <div class="print-bar">
-      <div>
-        <div class="card-title" style="margin-bottom:4px">Articoli ricondizionati da ritirare</div>
-        <p style="font-size:12px;color:var(--text2)">Si aggiornano automaticamente quando registri una vendita con "Ricondizionato: Sì – da ritirare"</p>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px" class="no-print">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-          <input type="checkbox" id="chk-nascondi-completati" onchange="renderRitiri()" style="width:16px;height:16px;accent-color:var(--accent)">
-          Nascondi completati
-        </label>
-      </div>
-    </div>
-
-    <!-- contatori -->
-    <div class="metrics-grid" style="margin-bottom:1rem" id="ritiri-stats"></div>
-
-    <div class="table-wrap"><table id="tbl-ritiri-wrap">
-      <thead><tr>
-        <th>Data vendita</th>
-        <th>Mese</th>
-        <th>Codice</th>
-        <th>Articolo</th>
-        <th>Cliente</th>
-        <th>Fornitore</th>
-        <th>Qtà</th>
-        <th>Prezzo</th>
-        <th>Socio</th>
-        <th>Note</th>
-        <th class="check-cell" style="min-width:100px">Ritirato<br>dal cliente</th>
-        <th class="check-cell" style="min-width:100px">Restituito<br>al fornitore</th>
-      </tr></thead>
-      <tbody id="tbl-ritiri"></tbody>
-    </table></div>
-  </div>
-</div>
 
 <!-- INSOLUTI CLIENTI -->
 <div id="sec-insoluti" class="section">
@@ -680,7 +747,10 @@
         <div class="card-title" style="margin-bottom:4px">Debiti verso fornitori</div>
         <p style="font-size:12px;color:var(--text2)">Tutti i saldi aperti verso i fornitori, mese per mese</p>
       </div>
-      <button class="btn primary" onclick="stampaDebitiFor()">🖨 Stampa lista debiti</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="apriGestioneDebitiVecchi()" style="padding:8px 16px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#7d3c98,#9b59b6);color:#fff;box-shadow:0 3px 8px rgba(125,60,152,0.4)">🗂 Gestisci debiti vecchi</button>
+        <button class="btn primary" onclick="stampaDebitiFor()">🖨 Stampa lista debiti</button>
+      </div>
     </div>
     <!-- totale globale in evidenza -->
     <div id="df-totale" style="display:none;margin-bottom:1rem;padding:16px 20px;background:var(--red2);border:2px solid #F0B0B0;border-radius:var(--radius);text-align:center">
@@ -699,23 +769,27 @@
         <div class="card-title" style="margin-bottom:4px">Resi clienti da ritirare</div>
         <p style="font-size:12px;color:var(--text2)">Articoli ricondizionati da ritirare dai clienti — tutti i mesi</p>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button onclick="apriNuovoReso('ricondizionato')" style="padding:8px 16px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#148f77,#1abc9c);color:#fff;box-shadow:0 3px 8px rgba(20,143,119,0.5)">↩ Aggiungi reso da ritirare</button>
+        <button class="btn primary" onclick="stampaResiClienti()">🖨 Stampa resi da ritirare</button>
+        <button class="btn primary" onclick="stampaResiDaRestituire()" style="background:linear-gradient(135deg,#7d3c98,#9b59b6);border-color:#7d3c98;box-shadow:0 3px 8px rgba(125,60,152,0.4)">🖨 Stampa resi da restituire al fornitore</button>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
           <input type="checkbox" id="chk-rc-completati" onchange="renderResiClienti()" style="width:16px;height:16px;accent-color:var(--accent)">
-          Nascondi ritirati
+          Nascondi consegnati al fornitore
         </label>
-        <button class="btn primary" onclick="stampaResiClienti()">🖨 Stampa lista</button>
       </div>
     </div>
     <div class="metrics-grid" id="rc-stats" style="margin-bottom:1rem"></div>
     <div class="table-wrap"><table>
       <thead><tr>
-        <th>Data vendita</th>
+        <th>Data</th>
+        <th>Tipo</th>
         <th>Cliente</th>
         <th>Articolo da ritirare</th>
         <th>Fornitore</th>
         <th>Mese</th>
         <th class="check-cell" style="min-width:110px">Ritirato<br>dal cliente</th>
+        <th class="check-cell" style="min-width:120px">Consegnato<br>al fornitore</th>
       </tr></thead>
       <tbody id="tbl-rc"></tbody>
     </table></div>
@@ -726,9 +800,29 @@
 <div id="sec-soldiInMano" class="section">
   <div class="card">
     <div class="card-title">Soldi in mano ai soci – mese attivo</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:1.2rem">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:1rem">
       Calcolo: <strong>Incassato</strong> − <strong>Spese pagate</strong> − <strong>Guadagno a testa (50% margine)</strong>
     </p>
+
+    <!-- INSERIMENTO MANUALE CONTANTI IN MANO -->
+    <div style="margin-bottom:1.2rem;padding:14px 18px;background:var(--amber2);border:1.5px solid var(--amber);border-radius:var(--radius);display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap">
+      <div style="font-size:12px;font-weight:700;color:var(--amber3);align-self:center">💰 Contanti fisicamente in mano:</div>
+      <div class="field" style="margin:0;min-width:160px">
+        <label style="color:var(--green3);font-weight:700">Ciro – contanti €</label>
+        <input type="number" step="0.01" min="0" id="cash-ciro"
+          placeholder="0.00"
+          onchange="salvaCashInMano('ciro',this.value)"
+          style="width:140px;padding:8px 12px;border:2px solid var(--green);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--green3);outline:none;text-align:right">
+      </div>
+      <div class="field" style="margin:0;min-width:160px">
+        <label style="color:var(--accent3);font-weight:700">Gigi – contanti €</label>
+        <input type="number" step="0.01" min="0" id="cash-gigi"
+          placeholder="0.00"
+          onchange="salvaCashInMano('gigi',this.value)"
+          style="width:140px;padding:8px 12px;border:2px solid var(--accent);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--accent3);outline:none;text-align:right">
+      </div>
+    </div>
+
     <div class="two-col">
       <!-- CIRO -->
       <div class="card" style="border-top:4px solid var(--green);background:linear-gradient(160deg,var(--green2),#fff)">
@@ -957,13 +1051,12 @@ function cambiaMese(){ meseAttivo=mkKey(+$('sel-anno').value,+$('sel-mese').valu
 function aggiornaPill(){ const [y,m]=meseAttivo.split('-'); $('mese-pill').textContent=`${MESI[+m-1]} ${y}`; }
 
 function T(t){
-  const tabs=['vendite','uscite','resi','acconti','clienti','fornitori','riepilogo','storico','debitiFor','ritiri','insoluti','resiClienti','soldiInMano'];
+  const tabs=['vendite','uscite','resi','acconti','clienti','fornitori','riepilogo','storico','debitiFor','insoluti','resiClienti','soldiInMano'];
   document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===t));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   $('sec-'+t).classList.add('active');
   if(t==='riepilogo') renderRiepilogo();
   if(t==='storico') renderStorico();
-  if(t==='ritiri') renderRitiri();
   if(t==='insoluti') renderInsoluti();
   if(t==='resiClienti') renderResiClienti();
   if(t==='debitiFor') renderDebitiFor();
@@ -972,10 +1065,54 @@ function T(t){
 
 function popolaSelects(){
   const fO='<option value="">— seleziona fornitore —</option>'+(S.fornitori.length?S.fornitori.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'');
-  const cO='<option value="">— contanti —</option>'+S.clienti.map(c=>`<option value="${c.id}">${c.nome}${c.ref?' ('+c.ref+')':''}</option>`).join('');
-  ['v-for','u-for','r-for','a-for'].forEach(id=>{const e=$(id);if(e)e.innerHTML=fO;});
-  // a-cli è ancora un select normale
+  const cO='<option value="">— seleziona cliente —</option>'+S.clienti.map(c=>`<option value="${c.id}">${c.nome}${c.ref?' ('+c.ref+')':''}</option>`).join('');
+  const cOR='<option value="">— seleziona cliente —</option>'+S.clienti.map(c=>`<option value="${c.nome}">${c.nome}${c.ref?' ('+c.ref+')':''}</option>`).join('');
+  ['v-for','u-for','r-for','a-for','mr-for'].forEach(id=>{const e=$(id);if(e)e.innerHTML=fO;});
   const aCli=$('a-cli'); if(aCli) aCli.innerHTML=cO;
+  const rCli=$('r-cli-rc'); if(rCli) rCli.innerHTML=cOR;
+  const mrCli=$('mr-cli'); if(mrCli) mrCli.innerHTML=cOR;
+}
+function apriModalReso(id){
+  const r=M().resi.find(x=>x.id===id); if(!r)return;
+  popolaSelects();
+  $('mr-id').value=id;
+  $('mr-cod').value=r.cod||'';
+  $('mr-desc').value=r.desc||'';
+  $('mr-for').value=r.fid||'';
+  $('mr-cli').value=r.clienteVendita||'';
+  $('mr-val').value=r.val||'';
+  $('mr-qty').value=r.qty||1;
+  $('mr-tipo').value=r.tipo||'ricondizionato';
+  $('mr-note').value=r.note||'';
+  $('mr-data').value=itToISO(r.data)||todayISO();
+  $('mr-ritirato').checked=r.ritiratoDaCliente||false;
+  document.getElementById('mr-modal').style.display='block';
+  document.getElementById('mr-overlay').style.display='block';
+}
+function chiudiModalReso(){
+  document.getElementById('mr-modal').style.display='none';
+  document.getElementById('mr-overlay').style.display='none';
+}
+function salvaModalReso(){
+  const id=+$('mr-id').value;
+  const r=M().resi.find(x=>x.id===id); if(!r)return;
+  const fid=$('mr-for').value;
+  const f=S.fornitori.find(x=>x.id==fid);
+  const val=parseFloat($('mr-val').value)||0;
+  const qty=parseInt($('mr-qty').value)||1;
+  const tipo=$('mr-tipo').value;
+  const effs={ricondizionato:'Scalare dal conteggio del fornitore',garanzia:'Garanzia OK – scalato',nogaranzia:'No garanzia – aggiunto al nostro debito',nonconforme:'Non conforme – scalato dal debito fornitore'};
+  r.cod=$('mr-cod').value.trim();
+  r.desc=$('mr-desc').value.trim();
+  r.fid=fid; r.fnome=f?f.nome:'';
+  r.clienteVendita=$('mr-cli').value||'';
+  r.val=val; r.qty=qty; r.tot=val*qty;
+  r.tipo=tipo; r.effetto=effs[tipo];
+  r.note=$('mr-note').value.trim();
+  r.data=isoToIt($('mr-data').value||todayISO());
+  r.ritiratoDaCliente=$('mr-ritirato').checked;
+  chiudiModalReso();
+  save(); render();
 }
 function toggleAcconto(){ $('acc-wrap').classList.toggle('hidden',$('v-stato').value!=='acconto'); }
 function toggleUscita(){ $('u-for-wrap').classList.toggle('hidden',$('u-cat').value!=='fornitore'); }
@@ -996,9 +1133,16 @@ function saldoFor(fid,k){
   const pag=ms.uscite.filter(u=>u.cat==='fornitore'&&u.fid==fid).reduce((s,u)=>s+u.imp,0);
   const acc=ms.acconti.filter(a=>a.dir==='dafornitore'&&a.id2==fid).reduce((s,a)=>s+a.imp,0);
   const res=ms.resi.filter(r=>r.fid==fid&&r.tipo!=='nogaranzia').reduce((s,r)=>s+r.tot,0);
-  // debito vecchio: i pagamenti scalano prima da lì, poi dal mese corrente
+  // debito vecchio: prima cerca chiave individuale, poi chiave creditore
   const dvKey=`dv_${fid}_${k}`;
-  const dv=parseFloat((S.debitiVecchi&&S.debitiVecchi[dvKey])||0);
+  const f=S.fornitori.find(function(x){return x.id==fid;});
+  const credKey = f&&f.creditore ? `dvcred_${f.creditore}_${k}` : null;
+  let dv=parseFloat((S.debitiVecchi&&S.debitiVecchi[dvKey])||0);
+  // se non c'è chiave individuale ma c'è chiave creditore, distribuisci equamente tra i fornitori del gruppo
+  if(!dv && credKey && S.debitiVecchi&&S.debitiVecchi[credKey]){
+    const nGruppo=(S.fornitori.filter(function(x){return x.creditore===f.creditore;}).length)||1;
+    dv=parseFloat(S.debitiVecchi[credKey])/nGruppo;
+  }
   const pagSuDV=Math.min(pag,dv);           // quota del pagamento che copre il debito vecchio
   const pagSuMese=Math.max(0,pag-dv);       // quota che copre il mese corrente
   const dvResiduo=Math.max(0,dv-pag);       // debito vecchio ancora da saldare
@@ -1062,8 +1206,38 @@ function salvaModalUscita(){
   chiudiModalUscita(); save(); render();
 }
 
+function apriVenditaDaReso(key){
+  const v = window._resoVenditaMap && window._resoVenditaMap[key];
+  if(!v){ alert('Vendita non trovata'); return; }
+  // popola direttamente il modal senza cercare per ID
+  const fO='<option value="">— seleziona fornitore —</option>'+(S.fornitori.length?S.fornitori.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'');
+  $('vm-for').innerHTML=fO;
+  $('vm-id').value='';  // non usato per il salvataggio in questo caso
+  $('vm-data').value=itToISO(v.data||todayStr());
+  $('vm-art').value=v.art||'';
+  $('vm-cod').value=v.cod||'';
+  $('vm-costo').value=v.costo||'';
+  $('vm-prez').value=v.prez||'';
+  $('vm-qty').value=v.qty||1;
+  $('vm-iva').value=v.iva||0;
+  $('vm-ricond').value=v.ricond||'no';
+  $('vm-for').value=v.fid||'';
+  $('vm-pag').value=v.pag||'contanti';
+  $('vm-stato').value=v.stato||'nonpagato';
+  $('vm-acconto').value=v.acconto||'';
+  $('vm-note').value=v.note||'';
+  vmToggleAcconto();
+  if(v.cid){
+    const c=S.clienti.find(x=>x.id==v.cid);
+    if(c){ $('vm-cli-txt').value=c.nome+(c.ref?' ('+c.ref+')':''); $('vm-cli').value=v.cid; }
+  } else { $('vm-cli-txt').value=''; $('vm-cli').value=''; }
+  // salva riferimento alla vendita per il salvataggio
+  window._vmVenditaRef = v;
+  $('vm-modal').style.display='block';
+  $('vm-overlay').style.display='block';
+}
 function apriModalVendita(id){
-  const v=M().vendite.find(x=>x.id===id); if(!v)return;
+  const v=M().vendite.find(x=>x.id==id); if(!v)return;
   // popola fornitore select nel modal
   const fO='<option value="">— seleziona fornitore —</option>'+(S.fornitori.length?S.fornitori.map(f=>`<option value="${f.id}">${f.nome}</option>`).join(''):'');
   $('vm-for').innerHTML=fO;
@@ -1099,8 +1273,19 @@ function vmToggleAcconto(){
   $('vm-acc-wrap').classList.toggle('hidden',$('vm-stato').value!=='acconto');
 }
 function salvaModalVendita(){
-  const id=+$('vm-id').value;
-  const art=$('vm-art').value.trim(); if(!art)return alert('Inserisci articolo');
+  const idVal = $('vm-id').value;
+  // cerca la vendita: prima per ID, poi per riferimento diretto
+  let old = null;
+  let idx = -1;
+  if(idVal){
+    idx = M().vendite.findIndex(x=>String(x.id)===String(idVal)||x.id==idVal);
+    if(idx>=0) old = M().vendite[idx];
+  }
+  if(!old && window._vmVenditaRef){
+    idx = M().vendite.indexOf(window._vmVenditaRef);
+    if(idx>=0) old = M().vendite[idx];
+  }
+  if(!old){ alert('Vendita non trovata'); return; }
   const fid=$('vm-for').value; if(!fid)return alert('⚠️ Seleziona un fornitore prima di continuare!');
   const prez=parseFloat($('vm-prez').value)||0; if(prez<=0)return alert('Inserisci prezzo');
   const cod=$('vm-cod').value.trim();
@@ -1119,23 +1304,14 @@ function salvaModalVendita(){
   const totImp=prez*qty;
   const ivaAmt=iva>0?parseFloat((totImp*iva/100).toFixed(2)):0;
   const totLordo=parseFloat((totImp+ivaAmt).toFixed(2));
+  const art=$('vm-art').value.trim(); if(!art)return alert('Inserisci articolo');
   const totCosto=costo*qty;
   const margine=parseFloat(((prez-costo)*qty).toFixed(2));
-  const idx=M().vendite.findIndex(x=>x.id===id); if(idx===-1)return;
-  const old=M().vendite[idx];
   const nuovoPrezzoPagato=(stato==='pagato')?(old.prezzoPagato&&old.prezzoPagato!==old.totLordo?old.prezzoPagato:totLordo):(stato==='acconto'?old.prezzoPagato:0);
-  M().vendite[idx]={...old,data:nuovaData,cod,art,fid,fnome:f?f.nome:'',costo,prez,qty,iva,ivaAmt,totImp,totLordo,totCosto,margine,cid,cnome:c?c.nome:'contanti',pag,stato,acconto,ricond,note,prezzoPagato:nuovoPrezzoPagato};
+  M().vendite[idx]={...old,data:nuovaData,cod,art,fid,fnome:f?f.nome:'',costo,prez,qty,iva,ivaAmt,totImp,totLordo,totCosto,margine,cid,cnome:c?c.nome:'contanti',pag,stato,acconto,ricond,note,prezzoPagato:nuovoPrezzoPagato,_meseKey:old._meseKey||meseAttivo};
+  window._vmVenditaRef = null;
   chiudiModalVendita();
   save();render();
-  // flash verde sulla riga
-  setTimeout(()=>{
-    document.querySelectorAll('#tbl-v tr').forEach(r=>{
-      if(r.innerHTML.includes(`apriModalVendita(${id})`)){
-        r.style.transition='background 0.3s'; r.style.background='var(--green2)';
-        setTimeout(()=>r.style.background='',1200);
-      }
-    });
-  },50);
 }
 // autocomplete nel modal vendita
 let vmAcIdx=-1;
@@ -1342,11 +1518,15 @@ function togglePagato(id){
   const v=M().vendite.find(x=>x.id===id); if(!v)return;
   const diventa = v.stato !== 'pagato';
   v.stato = diventa ? 'pagato' : 'nonpagato';
-  if(diventa){ v.prezzoPagato = v.totLordo; v.socio = ''; }
-  else { v.prezzoPagato = 0; v.socio = ''; }
+  if(diventa){
+    v.prezzoPagato = v.totLordo; v.socio = '';
+    // se bonifico → scala costo al fornitore e margine dal DV più vecchio
+    if(v.pag==='bonifico') gestisciBonificoFornitore(v);
+  } else {
+    v.prezzoPagato = 0; v.socio = '';
+  }
   save();
   aggiornaRigaVendita(id);
-  // se diventa pagato, mostra il select evidenziato e un messaggio
   if(diventa){
     setTimeout(()=>{
       const righe = document.querySelectorAll('#tbl-v tr');
@@ -1355,6 +1535,53 @@ function togglePagato(id){
         if(sel){ sel.style.border='2px solid var(--red3)'; sel.style.boxShadow='0 0 0 3px rgba(214,48,48,0.2)'; sel.focus(); }
       }});
     },50);
+  }
+}
+
+function gestisciBonificoFornitore(v){
+  if(!v.fid || !v.costo || v.costo<=0) return;
+  const meseKey = v._meseKey || meseAttivo;
+  const ms = getMese(meseKey);
+  const f = S.fornitori.find(function(x){return x.id==v.fid;});
+  if(!f) return;
+
+  // 1. Registra pagamento al fornitore pari al COSTO nel mese della vendita
+  ms.uscite.push({
+    id: Date.now()+Math.random(),
+    data: v.data||todayStr(),
+    cat: 'fornitore',
+    fid: v.fid,
+    label: 'Bonifico cliente → pagamento '+f.nome,
+    imp: v.totCosto||v.costo||0,
+    pag: 'bonifico',
+    desc: 'Auto: bonifico da '+v.cnome+' per '+v.art,
+    socio: 'Entrambi',
+    _autoBonifico: true
+  });
+
+  // 2. Scala il MARGINE dal DV più vecchio del fornitore
+  const margine = v.margine||0;
+  if(margine<=0) return;
+  if(!S.debitiVecchi) S.debitiVecchi={};
+
+  // Trova tutte le chiavi DV per questo fornitore o il suo creditore, ordinate per mese (più vecchio prima)
+  const credKey = f.creditore ? 'dvcred_'+f.creditore+'_' : null;
+  const indKey = 'dv_'+f.id+'_';
+
+  const tutteChiavi = Object.keys(S.debitiVecchi).filter(function(k){
+    return (credKey && k.startsWith(credKey)) || k.startsWith(indKey);
+  }).sort(); // ordine crescente = dal più vecchio
+
+  let rimasto = margine;
+  for(var i=0; i<tutteChiavi.length && rimasto>0; i++){
+    const k = tutteChiavi[i];
+    const attuale = parseFloat(S.debitiVecchi[k]||0);
+    if(attuale<=0) continue;
+    const scalato = Math.min(attuale, rimasto);
+    const nuovo = parseFloat((attuale - scalato).toFixed(2));
+    if(nuovo<=0) delete S.debitiVecchi[k];
+    else S.debitiVecchi[k] = nuovo;
+    rimasto = parseFloat((rimasto - scalato).toFixed(2));
   }
 }
 function setSocio(id, socio){
@@ -1472,19 +1699,18 @@ function addVendita(){
   const totImp=prez*qty; const ivaAmt=iva>0?parseFloat((totImp*iva/100).toFixed(2)):0;
   const totLordo=parseFloat((totImp+ivaAmt).toFixed(2)); const totCosto=costo*qty;
   const margine=parseFloat(((prez-costo)*qty).toFixed(2));
-  M().vendite.push({id:Date.now(),data:isoToIt($('v-data').value||todayISO()),cod,modello,art,fid,fnome:f?f.nome:'',costo,prez,qty,iva,ivaAmt,totImp,totLordo,totCosto,margine,cid,cnome:c?c.nome:'contanti',pag,stato,acconto,ricond,socio,note});
+  M().vendite.push({id:Date.now(),data:isoToIt($('v-data').value||todayISO()),cod,modello,art,fid,fnome:f?f.nome:'',costo,prez,qty,iva,ivaAmt,totImp,totLordo,totCosto,margine,cid,cnome:c?c.nome:'contanti',pag,stato,acconto,ricond,socio,note,_meseKey:meseAttivo});
   ['v-cod','v-art','v-costo','v-prez','v-note','v-acconto'].forEach(id=>$(id).value=''); $('v-qty').value='1';
   $('v-data').value=todayISO();
   acReset();
+  chiudiNuovaVendita();
   save();render();
 }
 
 function editVendita(id){
   const v=M().vendite.find(x=>x.id===id); if(!v)return;
   _editingVenditaId=id;
-  // Scorri su
-  $('sec-vendite').scrollIntoView({behavior:'smooth',block:'start'});
-  // Popola form
+  apriNuovaVendita();
   popolaSelects();
   $('v-cod').value=v.cod||'';
   $('v-art').value=v.art||'';
@@ -1552,26 +1778,33 @@ function salvaModificaVendita(){
   },50);
 }
 
+function apriNuovaVendita(){
+  document.getElementById('nv-modal').style.display='block';
+  document.getElementById('nv-overlay').style.display='block';
+  setDate();
+}
+function chiudiNuovaVendita(){
+  document.getElementById('nv-modal').style.display='none';
+  document.getElementById('nv-overlay').style.display='none';
+}
 function cancelEditVendita(){
   _editingVenditaId=null;
-  ['v-cod','v-art','v-costo','v-prez','v-note','v-acconto'].forEach(id=>$(id).value='');
-  if($('v-data')) $('v-data').value=todayISO();
-  acReset();
-  $('v-qty').value='1';
-  $('v-form-title').textContent='Nuova vendita';
-  $('v-form-title').style.color='';
-  $('v-submit-btn').textContent='+ Registra vendita';
-  $('v-submit-btn').style.background='';
-  $('v-submit-btn').style.borderColor='';
-  $('v-submit-btn').style.color='';
-  $('v-cancel-btn').style.display='none';
-  $('v-edit-banner').classList.remove('visible');
-  $('acc-wrap').classList.add('hidden');
-  document.querySelectorAll('#tbl-v tr').forEach(r=>r.style.background='');
+  chiudiNuovaVendita();
+  svuotaCampiVendita();
 }
 function delVendita(id){ if(!confirm('Eliminare questa vendita?'))return; M().vendite=M().vendite.filter(x=>x.id!==id); save();render(); }
 
 // ---- SPESE ----
+function apriNuovaSpesa(){
+  document.getElementById('nu-modal').style.display='block';
+  document.getElementById('nu-overlay').style.display='block';
+  setDate();
+  popolaSelects();
+}
+function chiudiNuovaSpesa(){
+  document.getElementById('nu-modal').style.display='none';
+  document.getElementById('nu-overlay').style.display='none';
+}
 function addUscita(){
   const cat=$('u-cat').value;
   const imp=parseFloat($('u-imp').value)||0;
@@ -1595,27 +1828,50 @@ function addUscita(){
   const fnome=f?f.nome:'';
   const labs={fornitore:'Pag. fornitore',stipendio_carmen:'Stipendio Carmen',benzina:'Benzina',beppe:'Compenso Beppe',altro:'Altro'};
   M().uscite.push({id:Date.now(),data:isoToIt($('u-data').value||todayISO()),cat,label:labs[cat]+(fnome?' – '+fnome:''),imp,pag,desc:'',fid,socio});
-  $('u-imp').value=''; $('u-data').value=todayISO(); $('u-socio').value=''; $('u-cat').value=''; save();render();
+  $('u-imp').value=''; $('u-data').value=todayISO(); $('u-socio').value=''; $('u-cat').value='';
+  chiudiNuovaSpesa();
+  save();render();
 }
 function delUscita(id){ M().uscite=M().uscite.filter(x=>x.id!==id); save();render(); }
 
 // ---- RESI ----
+function apriNuovoReso(tipo){
+  document.getElementById('nr-modal').style.display='block';
+  document.getElementById('nr-overlay').style.display='block';
+  setDate();
+  popolaSelects();
+  if(tipo) $('r-tipo').value=tipo;
+  // aggiorna titolo modal in base al tipo
+  const titoli={ricondizionato:'Registra reso',garanzia:'Registra articolo difettoso',nonconforme:'Registra non conforme',nogaranzia:'Registra difettoso – garanzia non riconosciuta'};
+  const colori={ricondizionato:'#d4ac0d',garanzia:'var(--red3)',nonconforme:'var(--purple)',nogaranzia:'var(--red3)'};
+  document.querySelector('#nr-modal div[style*="font-size:16px"]').textContent=titoli[tipo]||'Registra reso / difettoso / non conforme';
+  document.querySelector('#nr-modal div[style*="font-size:16px"]').style.color=colori[tipo]||'var(--purple)';
+}
+function chiudiNuovoReso(){
+  document.getElementById('nr-modal').style.display='none';
+  document.getElementById('nr-overlay').style.display='none';
+}
 function addReso(){
   const desc=$('r-desc').value.trim(); if(!desc)return alert('Inserisci descrizione');
   const fid=$('r-for').value; if(!fid)return alert('⚠️ Seleziona un fornitore prima di continuare!');
   const cod=$('r-cod').value.trim(); const val=parseFloat($('r-val').value)||0;
   const qty=parseInt($('r-qty').value)||1; const tipo=$('r-tipo').value; const note=$('r-note').value.trim();
+  const clienteVendita=$('r-cli-rc').value||'';
+  const ritiratoDaCliente=$('r-ritirato').checked;
   const f=S.fornitori.find(x=>x.id==fid); const tot=val*qty;
-  const effs={ricondizionato:'Scalato dal debito fornitore',garanzia:'Garanzia OK – scalato',nogaranzia:'No garanzia – aggiunto al nostro debito'};
-  M().resi.push({id:Date.now(),data:isoToIt($('r-data').value||todayISO()),meseKey:meseAttivo,cod,desc,fid,fnome:f?f.nome:'',val,qty,tot,tipo,effetto:effs[tipo],note,ritiratoDaCliente:false,restituitoAlFornitore:false,clienteVendita:''});
-  ['r-cod','r-desc','r-val','r-note'].forEach(id=>$(id).value=''); $('r-qty').value='1'; $('r-data').value=todayISO(); save();render();
+  const effs={ricondizionato:'Scalare dal conteggio del fornitore',garanzia:'Garanzia OK – scalato',nogaranzia:'No garanzia – aggiunto al nostro debito',nonconforme:'Non conforme – scalato dal debito fornitore'};
+  M().resi.push({id:Date.now(),data:isoToIt($('r-data').value||todayISO()),meseKey:meseAttivo,cod,desc,fid,fnome:f?f.nome:'',val,qty,tot,tipo,effetto:effs[tipo],note,ritiratoDaCliente,restituitoAlFornitore:false,clienteVendita});
+  ['r-cod','r-desc','r-val','r-note'].forEach(id=>$(id).value=''); $('r-qty').value='1'; $('r-data').value=todayISO();
+  $('r-cli-rc').value=''; $('r-ritirato').checked=false;
+  chiudiNuovoReso();
+  save();render();
 }
 function delReso(id){ M().resi=M().resi.filter(x=>x.id!==id); save();render(); }
 function toggleResoCheck(meseKey,id,campo){
   const ms=getMese(meseKey);
   const r=ms.resi.find(x=>x.id==id); if(!r)return;
   r[campo]=!r[campo];
-  save(); renderRitiri();
+  save();
 }
 
 // ---- ACCONTI ----
@@ -1666,10 +1922,12 @@ function render(){
             <option value="Gigi" ${v.socio==='Gigi'?'selected':''}>Gigi</option>
           </select>`
         : `<span style="color:var(--text3);font-size:12px">—</span>`;
-      return`<tr>
+      const hasIva = v.iva > 0;
+      const rowBg = hasIva ? 'background:linear-gradient(90deg,#FFF0E6,#FFF4EE);border-left:3px solid #E8760A' : '';
+      return`<tr style="${rowBg}">
         <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${v.data}</td>
         <td style="font-weight:600;color:var(--accent3);cursor:pointer;text-decoration:underline dotted" onclick="apriModalVendita(${v.id})" title="Clicca per modificare">${v.cnome}</td>
-        <td>${v.art}</td>
+        <td>${v.art}${hasIva?` <span style="font-size:10px;font-weight:700;color:#E8760A;background:#FFF0E6;border:1px solid #E8760A;border-radius:8px;padding:1px 5px">IVA 22%</span>`:''}</td>
         <td><code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);padding:2px 6px;border-radius:4px">${v.cod||'—'}</code></td>
         <td>${prezzoHtml}</td>
         <td>${prezzoPagatoHtml}</td>
@@ -1715,32 +1973,24 @@ function render(){
     </tr>`).join('');
 
   // resi
-  const tc={ricondizionato:'b-amber',garanzia:'b-green',nogaranzia:'b-red',automatico:'b-pink'};
-  const tl={ricondizionato:'Ricondizionato',garanzia:'Garanzia OK',nogaranzia:'No garanzia',automatico:'Da ritirare'};
+  const tc={ricondizionato:'b-amber',garanzia:'b-green',nogaranzia:'b-red',automatico:'b-pink',nonconforme:'b-purple'};
+  const tl={ricondizionato:'Ricondizionato',garanzia:'Garanzia OK',nogaranzia:'No garanzia',automatico:'Da ritirare',nonconforme:'Non conforme'};
 
   // resi manuali + ricondizionati dalle vendite (aggiunti automaticamente)
   const resiManuali = ms.resi.map(r=>({...r, _fonte:'manuale'}));
-  const resiAutomatic = ms.vendite
-    .filter(v=>v.ricond==='si')
-    .filter(v=>!ms.resi.some(r=>r._vendId===v.id)) // evita duplicati se già registrato
-    .map(v=>({
-      id:'auto_'+v.id, _vendId:v.id, _fonte:'automatico',
-      data:v.data, cod:v.cod||'—', desc:v.art,
-      fnome:v.fnome, val:v.prez, qty:v.qty, tot:v.totLordo,
-      tipo:'automatico', effetto:'Da ritirare dal cliente e restituire al fornitore',
-      note:'Generato automaticamente dalla vendita',
-      ritiratoDaCliente:v.ritiroStato?.ritiratoDaCliente||false,
-      restituitoAlFornitore:v.ritiroStato?.restituitoAlFornitore||false,
-      cnome:v.cnome
-    }));
+  const resiAutomatic = [];  // righe automatiche disabilitate - solo resi manuali
 
   const tuttiResi = [...resiManuali, ...resiAutomatic];
 
   $('tbl-r').innerHTML=!tuttiResi.length?'<tr><td colspan="12" class="empty-row">Nessun reso questo mese</td></tr>':
     tuttiResi.map(r=>{
       const isAuto = r._fonte==='automatico';
-      const rowStyle = isAuto ? 'background:var(--pink2)' : '';
-      return`<tr style="${rowStyle}">
+      const isNC = r.tipo==='nonconforme';
+      const rowStyle = isNC ? 'background:var(--purple2);border-left:3px solid var(--purple)' : isAuto ? 'background:var(--pink2)' : '';
+      const clickable = isAuto
+        ? `style="${rowStyle}"`
+        : `onclick="apriModalReso(${r.id})" style="${rowStyle};cursor:pointer" title="Clicca per modificare"`;
+      return`<tr ${clickable}>
         <td style="font-size:11px;white-space:nowrap">${r.data}</td>
         <td><code style="font-family:'DM Mono',monospace;font-size:11px">${r.cod||'—'}</code></td>
         <td style="font-weight:${isAuto?'600':'400'}">${r.desc}${isAuto?` <span style="font-size:10px;color:var(--pink)">(vendita)</span>`:''}</td>
@@ -1749,12 +1999,11 @@ function render(){
         <td>${fmt(r.val)}</td><td>${r.qty}</td>
         <td style="font-weight:600">${fmt(r.tot)}</td>
         <td><span class="badge ${tc[r.tipo]||'b-gray'}">${tl[r.tipo]||r.tipo}</span></td>
-        <td style="font-size:11px;color:var(--text2)">${r.effetto}</td>
-        <td style="font-size:11px">
+        <td style="font-size:11px;color:${isNC?'var(--purple)':'var(--text2)'};font-weight:${isNC?'700':'400'}">${isNC?'⬇ Scalare dal conteggio del fornitore':r.effetto}</td>
+        <td style="font-size:11px" onclick="event.stopPropagation()">
           ${isAuto?`<span class="badge ${r.ritiratoDaCliente?'b-green':'b-red'}">${r.ritiratoDaCliente?'Ritirato':'Da ritirare'}</span>`:r.note||'—'}
         </td>
-        <td style="display:flex;gap:4px;justify-content:flex-end">
-          <button class="btn edit" style="padding:3px 8px;font-size:11px" onclick="T('ritiri')">Ritiri</button>
+        <td style="display:flex;gap:4px;justify-content:flex-end" onclick="event.stopPropagation()">
           ${!isAuto?`<button class="btn danger" style="padding:3px 8px;font-size:11px" onclick="delReso(${r.id})">Elimina</button>`:''}
         </td>
       </tr>`;}).join('');
@@ -1788,29 +2037,74 @@ function render(){
     </tr>`; }).join('');
 
   // fornitori
-  $('tbl-f').innerHTML=!S.fornitori.length?'<tr><td colspan="10" class="empty-row">Nessun fornitore</td></tr>':
-    S.fornitori.map(f=>{ const {acquistato,pagato,acconti,resi,saldo,debitoVecchio,debitoVecchioResiduo,pagSuDV}=saldoFor(f.id,meseAttivo);
-      const dvKey = `dv_${f.id}_${meseAttivo}`;
-      const dvVal = (S.debitiVecchi && S.debitiVecchi[dvKey]) ? S.debitiVecchi[dvKey] : '';
-      const credBadge = f.creditore ? `<span class="badge b-teal" style="background:var(--teal2);color:var(--teal);border:1px solid var(--teal);font-size:11px">${f.creditore}</span>` : '<span style="color:var(--text3);font-size:12px">—</span>';
-      const dvCell = debitoVecchio>0
-        ? `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">
-            <span style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:${debitoVecchioResiduo>0?'var(--purple)':'var(--green3)'}">
-              ${debitoVecchioResiduo>0 ? fmt(debitoVecchioResiduo) : '✓ Saldato'}
-            </span>
-            ${pagSuDV>0?`<span style="font-size:10px;color:var(--green3);font-weight:600">Pagato: ${fmt(pagSuDV)}</span>`:''}
-            <button onclick="editDebitoVecchio(${f.id},'${meseAttivo}')" class="btn" style="padding:2px 7px;font-size:10px;margin-top:2px;color:var(--purple);border-color:var(--purple)">✏ modifica</button>
-           </div>`
-        : `<button onclick="editDebitoVecchio(${f.id},'${meseAttivo}')" class="btn" style="padding:3px 9px;font-size:11px;color:var(--purple);border-color:var(--purple)">+ Inserisci</button>`;
-      return`<tr>
-        <td style="font-weight:600;color:var(--accent3);cursor:pointer;text-decoration:underline dotted" onclick="apriModalFornitore(${f.id})" title="Clicca per il resoconto">${f.nome}</td>
-        <td>${credBadge}</td>
-        <td>${f.tel||'—'}</td>
-        <td>${fmt(acquistato)}</td><td>${fmt(pagato)}</td><td>${fmt(acconti)}</td><td>${fmt(resi)}</td>
-        <td style="font-weight:600;color:${saldo>0?'var(--red)':'var(--accent)'}">${fmt(saldo)}</td>
-        <td style="background:var(--purple2)">${dvCell}</td>
-        <td><button class="btn danger" onclick="delFornitore(${f.id})">✕</button></td>
-      </tr>`;}).join('');
+  // Separa fornitori per creditore
+  const giaVisti = new Set();
+  const righe = [];
+
+  // Prima i gruppi creditore
+  const gruppi = {};
+  S.fornitori.forEach(f=>{
+    if(f.creditore){
+      if(!gruppi[f.creditore]) gruppi[f.creditore]=[];
+      gruppi[f.creditore].push(f);
+    }
+  });
+
+  // Riga aggregata per ogni gruppo creditore
+  Object.entries(gruppi).forEach(([nomeCred, flist])=>{
+    let totAcq=0,totPag=0,totAcc=0,totRes=0,totSaldo=0,totDVRes=0;
+    flist.forEach(f=>{
+      const s=saldoFor(f.id,meseAttivo);
+      totAcq+=s.acquistato; totPag+=s.pagato; totAcc+=s.acconti; totRes+=s.resi; totSaldo+=s.saldo; totDVRes+=s.debitoVecchioResiduo||0;
+      giaVisti.add(f.id);
+    });
+    const dettaglio = flist.map(f=>{
+      const s=saldoFor(f.id,meseAttivo);
+      return '<div style="font-size:10px;color:var(--text2);display:flex;justify-content:space-between;gap:8px;padding:1px 0">'
+        +'<span style="font-weight:600">'+f.nome+'</span>'
+        +'<span style="color:'+(s.saldo>0?'var(--red3)':'var(--text3)')+'">'+fmt(s.saldo)+'</span>'
+        +'</div>';
+    }).join('');
+    const dvCell = totDVRes>0
+      ? `<span style="font-weight:700;color:var(--purple);font-size:14px">${fmt(totDVRes)}</span>`
+      : `<button onclick="apriGestioneDebitiVecchi()" class="btn" style="padding:3px 9px;font-size:11px;color:var(--purple);border-color:var(--purple)">+ Inserisci</button>`;
+    righe.push(`<tr style="background:linear-gradient(90deg,var(--teal2),#F0FDFA);border-left:3px solid var(--teal)">
+      <td style="font-weight:800;color:var(--teal);font-size:15px">${nomeCred}
+        <div style="margin-top:3px">${dettaglio}</div>
+      </td>
+      <td><span class="badge b-teal" style="font-size:11px">Gruppo</span></td>
+      <td>—</td>
+      <td>${fmt(totAcq)}</td><td>${fmt(totPag)}</td><td>${fmt(totAcc)}</td><td>${fmt(totRes)}</td>
+      <td style="font-weight:700;color:${totSaldo>0?'var(--red)':'var(--accent)'};font-size:15px">${fmt(totSaldo)}</td>
+      <td style="background:var(--purple2)">${dvCell}</td>
+      <td></td>
+    </tr>`);
+  });
+
+  // Poi i fornitori singoli
+  S.fornitori.filter(f=>!giaVisti.has(f.id)).forEach(f=>{
+    const {acquistato,pagato,acconti,resi,saldo,debitoVecchio,debitoVecchioResiduo,pagSuDV}=saldoFor(f.id,meseAttivo);
+    const dvCell = debitoVecchio>0
+      ? `<div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end">
+          <span style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:${debitoVecchioResiduo>0?'var(--purple)':'var(--green3)'}">
+            ${debitoVecchioResiduo>0 ? fmt(debitoVecchioResiduo) : '✓ Saldato'}
+          </span>
+          ${pagSuDV>0?`<span style="font-size:10px;color:var(--green3);font-weight:600">Pagato: ${fmt(pagSuDV)}</span>`:''}
+          <button onclick="editDebitoVecchio(${f.id},'${meseAttivo}')" class="btn" style="padding:2px 7px;font-size:10px;margin-top:2px;color:var(--purple);border-color:var(--purple)">✏ modifica</button>
+         </div>`
+      : `<button onclick="editDebitoVecchio(${f.id},'${meseAttivo}')" class="btn" style="padding:3px 9px;font-size:11px;color:var(--purple);border-color:var(--purple)">+ Inserisci</button>`;
+    righe.push(`<tr>
+      <td style="font-weight:600;color:var(--accent3);cursor:pointer;text-decoration:underline dotted" onclick="apriModalFornitore(${f.id})" title="Clicca per il resoconto">${f.nome}</td>
+      <td><span style="color:var(--text3);font-size:12px">—</span></td>
+      <td>${f.tel||'—'}</td>
+      <td>${fmt(acquistato)}</td><td>${fmt(pagato)}</td><td>${fmt(acconti)}</td><td>${fmt(resi)}</td>
+      <td style="font-weight:600;color:${saldo>0?'var(--red)':'var(--accent)'}">${fmt(saldo)}</td>
+      <td style="background:var(--purple2)">${dvCell}</td>
+      <td><button class="btn danger" onclick="delFornitore(${f.id})">✕</button></td>
+    </tr>`);
+  });
+
+  $('tbl-f').innerHTML = righe.length ? righe.join('') : '<tr><td colspan="10" class="empty-row">Nessun fornitore</td></tr>';
 }
 
 // ---- CALCOLA TOTALI MESE ----
@@ -1886,6 +2180,14 @@ function renderRiepilogoIn(k,idMet,idCiro,idGigi,idFor,idCli,idRic){
 }
 
 // ---- SOLDI IN MANO AI SOCI ----
+function salvaCashInMano(socio, val){
+  if(!S.cashInMano) S.cashInMano={};
+  const k = 'cash_'+socio+'_'+meseAttivo;
+  const v = parseFloat(val)||0;
+  if(v>0) S.cashInMano[k]=v;
+  else delete S.cashInMano[k];
+  save(); renderSoldiInMano();
+}
 function renderSoldiInMano(){
   const ms = getMese(meseAttivo);
   const [y,m] = meseAttivo.split('-');
@@ -1908,27 +2210,37 @@ function renderSoldiInMano(){
   const margTotale = ms.vendite.reduce((s,v)=>s+v.margine,0);
   const guadagnoATesta = margTotale / 2;
 
-  // soldi in mano = incassato - spese pagate - guadagno a testa
-  const inManoCiro = incassatoCiro - speseCiro - guadagnoATesta;
-  const inManoGigi = incassatoGigi - speseGigi - guadagnoATesta;
+  // contanti fisicamente in mano (inseriti manualmente)
+  if(!S.cashInMano) S.cashInMano={};
+  const cashCiro = parseFloat(S.cashInMano['cash_ciro_'+meseAttivo]||0);
+  const cashGigi = parseFloat(S.cashInMano['cash_gigi_'+meseAttivo]||0);
+
+  // popola i campi input
+  const elCiro=$('cash-ciro'); if(elCiro&&elCiro!==document.activeElement) elCiro.value=cashCiro||'';
+  const elGigi=$('cash-gigi'); if(elGigi&&elGigi!==document.activeElement) elGigi.value=cashGigi||'';
+
+  // soldi in mano = incassato - spese - guadagno + contanti fisici
+  const inManoCiro = incassatoCiro - speseCiro - guadagnoATesta + cashCiro;
+  const inManoGigi = incassatoGigi - speseGigi - guadagnoATesta + cashGigi;
   const totale = inManoCiro + inManoGigi;
 
-  function bloccoSocio(nome, incassato, spese, guadagno, inMano, colorClass){
+  function bloccoSocio(nome, incassato, spese, guadagno, cash, inMano, colorClass){
     return `
       <div class="metrics-grid" style="margin-bottom:.8rem">
         <div class="metric m-green"><div class="m-label">Incassato</div><div class="m-value ${colorClass}">${fmt(incassato)}</div></div>
         <div class="metric m-red"><div class="m-label">Spese pagate</div><div class="m-value red">${fmt(spese)}</div></div>
         <div class="metric m-amber"><div class="m-label">Guadagno a testa</div><div class="m-value amber">${fmt(guadagno)}</div></div>
+        ${cash>0?`<div class="metric m-green"><div class="m-label">Contanti in mano</div><div class="m-value green">${fmt(cash)}</div></div>`:''}
       </div>
       <div style="padding:14px 16px;border-radius:var(--radius-sm);background:${inMano>=0?'var(--accent2)':'var(--red2)'};border:1.5px solid ${inMano>=0?'#a8d9bc':'#F0B0B0'}">
-        <div style="font-size:11px;font-weight:700;color:${inMano>=0?'var(--green3)':'var(--red3)'};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Soldi in mano</div>
+        <div style="font-size:11px;font-weight:700;color:${inMano>=0?'var(--green3)':'var(--red3)'};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Totale in mano</div>
         <div style="font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:${inMano>=0?'var(--green3)':'var(--red3)'}">${fmt(inMano)}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:6px">${fmt(incassato)} − ${fmt(spese)} − ${fmt(guadagno)}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:6px">${fmt(incassato)} − ${fmt(spese)} − ${fmt(guadagno)}${cash>0?' + '+fmt(cash)+' contanti':''}</div>
       </div>`;
   }
 
-  $('sim-ciro').innerHTML = bloccoSocio('Ciro', incassatoCiro, speseCiro, guadagnoATesta, inManoCiro, 'green');
-  $('sim-gigi').innerHTML = bloccoSocio('Gigi', incassatoGigi, speseGigi, guadagnoATesta, inManoGigi, 'blue');
+  $('sim-ciro').innerHTML = bloccoSocio('Ciro', incassatoCiro, speseCiro, guadagnoATesta, cashCiro, inManoCiro, 'green');
+  $('sim-gigi').innerHTML = bloccoSocio('Gigi', incassatoGigi, speseGigi, guadagnoATesta, cashGigi, inManoGigi, 'blue');
 
   $('sim-totale').textContent = fmt(totale);
   $('sim-totale').style.color = totale>=0 ? 'var(--accent)' : 'var(--red)';
@@ -1936,8 +2248,8 @@ function renderSoldiInMano(){
   $('sim-dettaglio').innerHTML = `
     <strong>Come si calcola:</strong><br>
     📦 Margine totale vendite del mese: <strong>${fmt(margTotale)}</strong> → guadagno a testa (50%): <strong>${fmt(guadagnoATesta)}</strong><br>
-    💰 Ciro ha incassato: <strong>${fmt(incassatoCiro)}</strong> e pagato spese: <strong>${fmt(speseCiro)}</strong><br>
-    💰 Gigi ha incassato: <strong>${fmt(incassatoGigi)}</strong> e pagato spese: <strong>${fmt(speseGigi)}</strong><br>
+    💰 Ciro ha incassato: <strong>${fmt(incassatoCiro)}</strong>, pagato spese: <strong>${fmt(speseCiro)}</strong>${cashCiro>0?`, contanti fisici: <strong>${fmt(cashCiro)}</strong>`:''}<br>
+    💰 Gigi ha incassato: <strong>${fmt(incassatoGigi)}</strong>, pagato spese: <strong>${fmt(speseGigi)}</strong>${cashGigi>0?`, contanti fisici: <strong>${fmt(cashGigi)}</strong>`:''}<br>
     📅 Mese: <strong>${nomeMese}</strong>
   `;
 }
@@ -1945,117 +2257,181 @@ function renderSoldiInMano(){
 // ---- DEBITI FORNITORI ----
 function renderDebitiFor(){
   const chiavi = Object.keys(S.mesi).sort().reverse();
-  const fornitoriConDebiti = [];
+
+  // Raggruppa fornitori per creditore
+  const gruppiCred = {};  // creditore → [fid]
+  const singoli = [];
   S.fornitori.forEach(f=>{
-    const righePerMese = [];
-    chiavi.forEach(k=>{
-      const s = saldoFor(f.id, k);
-      const [y,m] = k.split('-');
-      const nomeMese = MESI[+m-1]+' '+y;
-      if(s.acquistato>0 || s.saldo>0 || s.debitoVecchioResiduo>0){
-        righePerMese.push({k, nomeMese, acquistato:s.acquistato, pagato:s.pagato, acconti:s.acconti, resi:s.resi, saldo:s.saldo, debitoVecchio:s.debitoVecchio, debitoVecchioResiduo:s.debitoVecchioResiduo, pagSuDV:s.pagSuDV});
+    if(f.creditore){ if(!gruppiCred[f.creditore]) gruppiCred[f.creditore]=[]; gruppiCred[f.creditore].push(f); }
+    else singoli.push(f);
+  });
+
+  // Calcola DV creditore direttamente dalla chiave dvcred_
+  function dvCreditore(nomeCred, k){
+    const key='dvcred_'+nomeCred+'_'+k;
+    return parseFloat((S.debitiVecchi&&S.debitiVecchi[key])||0);
+  }
+
+  let totaleGlobale = 0;
+  let credHtml = '';
+  let blocchiFor = '';
+
+  // === BLOCCHI GAVAZZA (gruppi creditore) ===
+  Object.entries(gruppiCred).forEach(function(entry){
+    const nomeCred=entry[0], flist=entry[1];
+
+    // Per ogni mese: somma acquistato/pagato/acconti/resi/saldo dei singoli + DV del gruppo
+    const righeGruppo = [];
+    // aggiungi anche mesi con solo DV creditore (non necessariamente in S.mesi)
+    const tutteChiavi = new Set(chiavi);
+    if(S.debitiVecchi){
+      Object.keys(S.debitiVecchi).forEach(k=>{
+        if(k.startsWith('dvcred_'+nomeCred+'_')) tutteChiavi.add(k.replace('dvcred_'+nomeCred+'_',''));
+      });
+    }
+    const chiaviOrd = Array.from(tutteChiavi).sort().reverse();
+
+    chiaviOrd.forEach(k=>{
+      let acq=0,pag=0,acc=0,res=0,sld=0;
+      flist.forEach(f=>{
+        const s=saldoFor(f.id,k);
+        acq+=s.acquistato; pag+=s.pagato; acc+=s.acconti; res+=s.resi; sld+=s.saldo;
+      });
+      const dv = dvCreditore(nomeCred, k);
+      const pagSuDV = Math.min(pag, dv);
+      const dvResiduo = Math.max(0, dv - pagSuDV);
+      const [y,m]=k.split('-');
+      const nomeMese=MESI[+m-1]+' '+y;
+      if(acq>0||sld>0||dvResiduo>0||dv>0){
+        righeGruppo.push({k,nomeMese,acq,pag,acc,res,sld,dv,dvResiduo,pagSuDV});
       }
     });
-    if(righePerMese.length>0){
-      const totFatturato = righePerMese.reduce((s,r)=>s+r.acquistato,0);
-      const totDebito = righePerMese.reduce((s,r)=>s+r.saldo,0);
-      const totDVRes = righePerMese.reduce((s,r)=>s+r.debitoVecchioResiduo,0);
-      fornitoriConDebiti.push({f, righe:righePerMese, totFatturato, totDebito, totDVRes});
-    }
-  });
 
-  const totaleGlobale = fornitoriConDebiti.reduce((s,x)=>s+x.totDebito+x.totDVRes,0);
-  if(totaleGlobale>0){ $('df-totale').style.display='block'; $('df-totale-val').textContent=fmt(totaleGlobale); }
-  else { $('df-totale').style.display='none'; }
+    if(!righeGruppo.length) return;
 
-  if(!fornitoriConDebiti.length){
-    $('df-content').innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Nessun debito aperto verso i fornitori!</div>';
-    return;
-  }
+    const totFatt=righeGruppo.reduce((s,r)=>s+r.acq,0);
+    const totSld=righeGruppo.reduce((s,r)=>s+r.sld,0);
+    const totDVRes=righeGruppo.reduce((s,r)=>s+r.dvResiduo,0);
+    const totGruppo=totSld+totDVRes;
+    totaleGlobale+=totGruppo;
 
-  // riepilogo per creditore
-  const perCreditore = {};
-  fornitoriConDebiti.forEach(function(x){
-    const cred = x.f.creditore;
-    if(!cred) return;
-    if(!perCreditore[cred]) perCreditore[cred]={saldo:0,dv:0,nomi:[]};
-    perCreditore[cred].saldo += x.totDebito;
-    perCreditore[cred].dv += x.totDVRes;
-    perCreditore[cred].nomi.push(x.f.nome);
-  });
-  let credHtml = '';
-  const creditori = Object.entries(perCreditore);
-  if(creditori.length){
-    let righe = creditori.map(function(e){
-      const nome=e[0], dati=e[1];
-      const dvSpan = dati.dv>0 ? '<span style="font-size:12px;color:var(--purple);font-weight:600">DV residuo: '+fmt(dati.dv)+'</span>' : '';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(14,128,128,0.2)">'
-        +'<div><span style="font-weight:700;font-size:14px;color:var(--teal)">'+nome+'</span>'
-        +'<span style="font-size:11px;color:var(--text2);margin-left:8px">('+dati.nomi.join(', ')+')</span></div>'
-        +'<div style="display:flex;gap:16px;align-items:center">'+dvSpan
-        +'<span style="font-weight:700;color:var(--red3);font-size:18px;background:var(--red2);padding:4px 12px;border-radius:8px;border:1px solid #F0B0B0">TOTALE: '+fmt(dati.saldo+dati.dv)+'</span>'
-        +'</div></div>';
-    }).join('');
-    credHtml = '<div style="margin-bottom:1.4rem;padding:14px 18px;background:var(--teal2);border:2px solid var(--teal);border-radius:var(--radius)">'
-      +'<div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Riepilogo per creditore</div>'
-      +righe+'</div>';
-  }
+    // dettaglio singoli
+    const dettaglio=flist.map(f=>{
+      const tot=chiavi.reduce((s,k)=>{const x=saldoFor(f.id,k);return s+x.saldo;},0);
+      return '<span style="font-size:11px;color:var(--teal)">'+f.nome+': <strong>'+fmt(tot)+'</strong></span>';
+    }).join(' &nbsp;·&nbsp; ');
 
-  let blocchiFor = fornitoriConDebiti.map(function(x){
-    const f=x.f, righe=x.righe, totFatturato=x.totFatturato, totDebito=x.totDebito, totDVRes=x.totDVRes;
-    const totaleFornitore = totDebito + totDVRes;
-    const credBadge = f.creditore ? '<span style="font-size:11px;background:var(--teal2);color:var(--teal);border:1px solid var(--teal);border-radius:20px;padding:2px 8px;margin-left:8px;font-weight:600">'+f.creditore+'</span>' : '';
-    const telSpan = f.tel ? '<span style="font-size:11px;color:var(--text2);margin-left:4px">· '+f.tel+'</span>' : '';
-    const dvResSpan = totDVRes>0 ? '<span style="font-size:12px;color:var(--purple);font-weight:700">DV residuo: '+fmt(totDVRes)+'</span>' : '';
-    let righeHtml = righe.map(function(r){
-      const totRiga = r.saldo + r.debitoVecchioResiduo;
-      const dvCell = r.debitoVecchio>0
-        ? '<span style="font-weight:700;color:'+(r.debitoVecchioResiduo>0?'var(--purple)':'var(--green3)')+'">'+( r.debitoVecchioResiduo>0?fmt(r.debitoVecchioResiduo):'✓ Saldato')+'</span>'
-        : '<span style="color:var(--text3)">—</span>';
+    let righeHtml=righeGruppo.map(function(r){
+      const totRiga=r.sld+r.dvResiduo;
+      const dvCell=r.dv>0
+        ?'<span style="font-weight:700;color:'+(r.dvResiduo>0?'var(--purple)':'var(--green3)')+'">'+( r.dvResiduo>0?fmt(r.dvResiduo):'✓ Saldato')+'</span>'
+        :'<span style="color:var(--text3)">—</span>';
       return '<tr>'
-        +'<td style="font-weight:600;white-space:nowrap">'+r.nomeMese+'</td>'
-        +'<td style="text-align:right;font-weight:600;color:var(--accent3)">'+fmt(r.acquistato)+'</td>'
+        +'<td style="font-weight:600">'+r.nomeMese+'</td>'
+        +'<td style="text-align:right;color:var(--accent3)">'+fmt(r.acq)+'</td>'
+        +'<td style="text-align:right;color:var(--green3)">'+fmt(r.pag)+'</td>'
+        +'<td style="text-align:right;color:var(--amber3)">'+fmt(r.acc)+'</td>'
+        +'<td style="text-align:right;color:var(--green3)">'+fmt(r.res)+'</td>'
+        +'<td style="text-align:right;font-weight:700;color:'+(r.sld>0?'var(--red3)':'var(--text3)')+'">'+( r.sld>0?fmt(r.sld):'—')+'</td>'
+        +'<td style="text-align:right;background:var(--purple2)">'+dvCell+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:'+(totRiga>0?'var(--red3)':'var(--text3)')+'">'+( totRiga>0?fmt(totRiga):'—')+'</td>'
+        +'</tr>';
+    }).join('');
+
+    let totRow='<tr style="background:linear-gradient(90deg,#E8FAF8,#fff);border-top:2px solid var(--teal)">'
+      +'<td style="font-weight:800;color:var(--teal)">TOTALE</td>'
+      +'<td style="text-align:right;color:var(--accent3)">'+fmt(totFatt)+'</td>'
+      +'<td colspan="3"></td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--red3)">'+( totSld>0?fmt(totSld):'—')+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--purple);background:var(--purple2)">'+( totDVRes>0?fmt(totDVRes):'—')+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--red3);font-size:16px">'+fmt(totGruppo)+'</td>'
+      +'</tr>';
+
+    credHtml+='<div style="margin-bottom:1.4rem;border:2.5px solid var(--teal);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(90deg,var(--teal2),#E8FAF8);border-bottom:2px solid var(--teal)">'
+      +'<div>'
+        +'<span style="font-weight:800;font-size:17px;color:var(--teal)">'+nomeCred+'</span>'
+        +'<div style="margin-top:3px">'+dettaglio+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:12px;align-items:center">'
+        +'<span style="font-size:12px;color:var(--text2)">Fatturato: <strong style="color:var(--teal)">'+fmt(totFatt)+'</strong></span>'
+        +(totDVRes>0?'<span style="color:var(--purple);font-weight:700;font-size:12px">DV: '+fmt(totDVRes)+'</span>':'')
+        +'<span style="font-weight:800;color:#fff;font-size:17px;background:var(--teal);padding:6px 16px;border-radius:10px">TOTALE: '+fmt(totGruppo)+'</span>'
+      +'</div>'
+      +'</div>'
+      +'<div class="table-wrap"><table>'
+      +'<thead><tr><th>Mese</th><th style="text-align:right">Fatturato €</th><th style="text-align:right">Pagato €</th><th style="text-align:right">Acconti €</th><th style="text-align:right">Resi €</th><th style="text-align:right;color:var(--red3)">Debito mese €</th><th style="text-align:right;color:var(--purple)">DV residuo €</th><th style="text-align:right;color:var(--red3)">Totale dovuto €</th></tr></thead>'
+      +'<tbody>'+righeHtml+totRow+'</tbody>'
+      +'</table></div></div>';
+  });
+
+  // === BLOCCHI SINGOLI ===
+  singoli.forEach(f=>{
+    const righe=[];
+    chiavi.forEach(k=>{
+      const s=saldoFor(f.id,k);
+      const [y,m]=k.split('-');
+      if(s.acquistato>0||s.saldo>0||s.debitoVecchioResiduo>0){
+        righe.push({k,nomeMese:MESI[+m-1]+' '+y,...s});
+      }
+    });
+    if(!righe.length) return;
+    const totFatt=righe.reduce((s,r)=>s+r.acquistato,0);
+    const totSld=righe.reduce((s,r)=>s+r.saldo,0);
+    const totDV=righe.reduce((s,r)=>s+r.debitoVecchioResiduo,0);
+    const totFor=totSld+totDV;
+    totaleGlobale+=totFor;
+
+    let righeHtml=righe.map(function(r){
+      const totRiga=r.saldo+r.debitoVecchioResiduo;
+      const dvCell=r.debitoVecchio>0
+        ?'<span style="font-weight:700;color:'+(r.debitoVecchioResiduo>0?'var(--purple)':'var(--green3)')+'">'+( r.debitoVecchioResiduo>0?fmt(r.debitoVecchioResiduo):'✓ Saldato')+'</span>'
+        :'<span style="color:var(--text3)">—</span>';
+      return '<tr>'
+        +'<td style="font-weight:600">'+r.nomeMese+'</td>'
+        +'<td style="text-align:right;color:var(--accent3)">'+fmt(r.acquistato)+'</td>'
         +'<td style="text-align:right;color:var(--green3)">'+fmt(r.pagato)+'</td>'
         +'<td style="text-align:right;color:var(--amber3)">'+fmt(r.acconti)+'</td>'
         +'<td style="text-align:right;color:var(--green3)">'+fmt(r.resi)+'</td>'
         +'<td style="text-align:right;font-weight:700;color:'+(r.saldo>0?'var(--red3)':'var(--text3)')+'">'+( r.saldo>0?fmt(r.saldo):'—')+'</td>'
         +'<td style="text-align:right;background:var(--purple2)">'+dvCell+'</td>'
-        +'<td style="text-align:right;font-weight:800;font-size:14px;color:'+(totRiga>0?'var(--red3)':'var(--text3)')+'">'+( totRiga>0?fmt(totRiga):'—')+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:'+(totRiga>0?'var(--red3)':'var(--text3)')+'">'+( totRiga>0?fmt(totRiga):'—')+'</td>'
         +'</tr>';
     }).join('');
-    let totRow = '<tr style="background:linear-gradient(90deg,#FEF0F0,#fff);border-top:2px solid #F0B0B0">'
+    let totRow='<tr style="background:linear-gradient(90deg,#FEF0F0,#fff);border-top:2px solid #F0B0B0">'
       +'<td style="font-weight:800;color:var(--red3)">TOTALE</td>'
-      +'<td style="text-align:right;font-weight:700;color:var(--accent3)">'+fmt(totFatturato)+'</td>'
+      +'<td style="text-align:right;color:var(--accent3)">'+fmt(totFatt)+'</td>'
       +'<td colspan="3"></td>'
-      +'<td style="text-align:right;font-weight:800;color:var(--red3);font-size:14px">'+(totDebito>0?fmt(totDebito):'—')+'</td>'
-      +'<td style="text-align:right;font-weight:800;color:var(--purple);background:var(--purple2)">'+(totDVRes>0?fmt(totDVRes):'—')+'</td>'
-      +'<td style="text-align:right;font-weight:800;color:var(--red3);font-size:16px">'+fmt(totaleFornitore)+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--red3)">'+( totSld>0?fmt(totSld):'—')+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--purple);background:var(--purple2)">'+( totDV>0?fmt(totDV):'—')+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:var(--red3);font-size:16px">'+fmt(totFor)+'</td>'
       +'</tr>';
-    return '<div style="margin-bottom:1.4rem;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">'
+
+    const dvResSpan=totDV>0?'<span style="font-size:12px;color:var(--purple);font-weight:700;margin-right:8px">DV: '+fmt(totDV)+'</span>':'';
+    blocchiFor+='<div style="margin-bottom:1.4rem;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:linear-gradient(90deg,#EEF2FF,#E8EEFF);border-bottom:2px solid var(--border)">'
-      +'<div style="display:flex;align-items:center;gap:6px"><span style="font-weight:700;font-size:15px;color:var(--accent3)">'+f.nome+'</span>'+credBadge+telSpan+'</div>'
-      +'<div style="display:flex;gap:14px;align-items:center">'
-      +'<span style="font-size:12px;color:var(--text2)">Fatturato tot: <strong style="color:var(--accent3)">'+fmt(totFatturato)+'</strong></span>'
-      +dvResSpan
-      +'<span style="font-weight:700;color:var(--red3);font-size:16px;background:var(--red2);padding:4px 12px;border-radius:8px;border:1px solid #F0B0B0">Debito: '+fmt(totaleFornitore)+'</span>'
+      +'<span style="font-weight:700;font-size:15px;color:var(--accent3)">'+f.nome+(f.tel?' <span style="font-size:11px;color:var(--text2)">· '+f.tel+'</span>':'')+'</span>'
+      +'<div style="display:flex;gap:10px;align-items:center">'
+        +'<span style="font-size:12px;color:var(--text2)">Fatturato: <strong>'+fmt(totFatt)+'</strong></span>'
+        +dvResSpan
+        +'<span style="font-weight:700;color:var(--red3);font-size:16px;background:var(--red2);padding:4px 12px;border-radius:8px;border:1px solid #F0B0B0">Debito: '+fmt(totFor)+'</span>'
       +'</div></div>'
       +'<div class="table-wrap"><table>'
-      +'<thead><tr>'
-      +'<th>Mese</th>'
-      +'<th style="text-align:right">Fatturato €</th>'
-      +'<th style="text-align:right">Pagato €</th>'
-      +'<th style="text-align:right">Acconti €</th>'
-      +'<th style="text-align:right">Resi €</th>'
-      +'<th style="text-align:right;color:var(--red3)">Debito mese €</th>'
-      +'<th style="text-align:right;color:var(--purple)">DV residuo €</th>'
-      +'<th style="text-align:right;color:var(--red3);font-weight:800">Totale dovuto €</th>'
-      +'</tr></thead>'
+      +'<thead><tr><th>Mese</th><th style="text-align:right">Fatturato €</th><th style="text-align:right">Pagato €</th><th style="text-align:right">Acconti €</th><th style="text-align:right">Resi €</th><th style="text-align:right;color:var(--red3)">Debito mese €</th><th style="text-align:right;color:var(--purple)">DV residuo €</th><th style="text-align:right;color:var(--red3)">Totale dovuto €</th></tr></thead>'
       +'<tbody>'+righeHtml+totRow+'</tbody>'
       +'</table></div></div>';
-  }).join('');
+  });
 
+  if(totaleGlobale>0){ $('df-totale').style.display='block'; $('df-totale-val').textContent=fmt(totaleGlobale); }
+  else { $('df-totale').style.display='none'; }
+
+  if(!credHtml&&!blocchiFor){
+    $('df-content').innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:14px">Nessun debito aperto verso i fornitori!</div>';
+    return;
+  }
   $('df-content').innerHTML = credHtml + blocchiFor;
 }
+
 function stampaDebitiFor(){
   const chiavi = Object.keys(S.mesi).sort().reverse();
   const oggi = new Date();
@@ -2125,43 +2501,81 @@ function stampaDebitiFor(){
 function renderResiClienti(){
   const nascondi = $('chk-rc-completati')?.checked;
 
-  // raccoglie tutti i ricondizionati da tutte le vendite di tutti i mesi
   const righe = [];
   Object.keys(S.mesi).sort().reverse().forEach(k=>{
     const ms = getMese(k);
     const [ry,rm] = k.split('-');
     const nomeMese = `${MESI[+rm-1]} ${ry}`;
     ms.vendite.filter(v=>v.ricond==='si').forEach(v=>{
-      righe.push({v, k, nomeMese, ritirato: v.ritiroStato?.ritiratoDaCliente||false});
+      righe.push({tipo:'vendita', v, r:null, k, nomeMese,
+        ritirato: v.ritiroStato?.ritiratoDaCliente||false,
+        consegnato: v.ritiroStato?.restituitoAlFornitore||false,
+        cliente: v.cnome||'—', articolo: v.art, codice: v.cod, fornitore: v.fnome, data: v.data, tipoReso: 'ricondizionato'});
+    });
+    ms.resi.filter(r=>!r._fonte).forEach(r=>{
+      righe.push({tipo:'reso', v:null, r, k, nomeMese,
+        ritirato: r.ritiratoDaCliente||false,
+        consegnato: r.restituitoAlFornitore||false,
+        cliente: r.clienteVendita||'—', articolo: r.desc, codice: r.cod, fornitore: r.fnome, data: r.data, tipoReso: r.tipo});
     });
   });
 
+  righe.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+
   const totale = righe.length;
   const ritirati = righe.filter(r=>r.ritirato).length;
+  const consegnati = righe.filter(r=>r.consegnato).length;
   const daRitirare = totale - ritirati;
 
   $('rc-stats').innerHTML=`
-    <div class="metric m-blue"><div class="m-label">Totale ricondizionati</div><div class="m-value blue">${totale}</div></div>
+    <div class="metric m-blue"><div class="m-label">Totale</div><div class="m-value blue">${totale}</div></div>
     <div class="metric m-green"><div class="m-label">Già ritirati</div><div class="m-value green">${ritirati}</div></div>
     <div class="metric ${daRitirare>0?'m-red':'m-green'}"><div class="m-label">Da ritirare</div><div class="m-value ${daRitirare>0?'red':'green'}">${daRitirare}</div></div>
+    <div class="metric m-amber"><div class="m-label">Consegnati al fornitore</div><div class="m-value amber">${consegnati}</div></div>
   `;
 
-  const righeVis = nascondi ? righe.filter(r=>!r.ritirato) : righe;
+  // nascondi solo le righe "consegnate al fornitore"
+  const righeVis = nascondi ? righe.filter(r=>!r.consegnato) : righe;
+
+  // colori badge per tipo — giallo default, diventa verde se ritirato
+  function badgeTipoFn(tipoReso, ritirato){
+    if(ritirato){
+      return `<span class="badge b-green" style="font-size:10px">✓ Ritirato</span>`;
+    }
+    const colori={ricondizionato:'b-amber',garanzia:'b-red',nogaranzia:'b-red',nonconforme:'b-orange'};
+    const label={ricondizionato:'Reso',garanzia:'Difettoso',nogaranzia:'No garanzia',nonconforme:'Non conforme'};
+    return `<span class="badge ${colori[tipoReso]||'b-amber'}" style="font-size:10px">${label[tipoReso]||'Reso'}</span>`;
+  }
 
   $('tbl-rc').innerHTML = !righeVis.length
-    ? `<tr><td colspan="6" class="empty-row">${totale===0?'Nessun articolo ricondizionato registrato':'Tutti gli articoli sono stati ritirati!'}</td></tr>`
-    : righeVis.map(({v,k,nomeMese,ritirato})=>`<tr style="${ritirato?'opacity:0.45':''}">
-        <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${v.data}</td>
-        <td style="font-weight:600;color:var(--accent3)">${v.cnome}</td>
-        <td style="font-weight:500">${v.art}${v.cod?` <code style="font-size:10px;background:var(--surface2);padding:1px 5px;border-radius:3px">${v.cod}</code>`:''}</td>
-        <td>${v.fnome}</td>
-        <td style="font-size:11px;color:var(--text2)">${nomeMese}</td>
-        <td class="check-cell">
-          <input type="checkbox" ${ritirato?'checked':''}
-            onchange="toggleRcRitirato('${k}',${v.id})"
-            style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
-        </td>
-      </tr>`).join('');
+    ? `<tr><td colspan="8" class="empty-row">${totale===0?'Nessun articolo da ritirare':'Tutti gli articoli sono stati consegnati al fornitore!'}</td></tr>`
+    : righeVis.map(({tipo,v,r,k,nomeMese,ritirato,consegnato,cliente,articolo,codice,fornitore,data,tipoReso})=>{
+        const onchgRit = tipo==='reso'
+          ? `toggleRcRitatoReso('${k}',${r.id})`
+          : `toggleRcRitirato('${k}',${v.id})`;
+        const onchgCons = tipo==='reso'
+          ? `toggleRcConsegatoReso('${k}',${r.id})`
+          : `toggleRcConsegnato('${k}',${v.id})`;
+        const rowOp = consegnato ? 'opacity:0.4' : '';
+        return `<tr style="${rowOp}">
+          <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${data}</td>
+          <td>${badgeTipoFn(tipoReso, ritirato)}</td>
+          <td style="font-weight:600;color:var(--accent3)">${cliente}</td>
+          <td style="font-weight:500">${articolo}${codice?` <code style="font-size:10px;background:var(--surface2);padding:1px 5px;border-radius:3px">${codice}</code>`:''}</td>
+          <td>${fornitore}</td>
+          <td style="font-size:11px;color:var(--text2)">${nomeMese}</td>
+          <td class="check-cell">
+            <input type="checkbox" ${ritirato?'checked':''}
+              onchange="${onchgRit}"
+              style="width:18px;height:18px;cursor:pointer;accent-color:var(--green3)">
+          </td>
+          <td class="check-cell">
+            <input type="checkbox" ${consegnato?'checked':''}
+              onchange="${onchgCons}"
+              style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
+          </td>
+        </tr>`;
+      }).join('');
 }
 
 function toggleRcRitirato(meseKey, vid){
@@ -2171,7 +2585,79 @@ function toggleRcRitirato(meseKey, vid){
   v.ritiroStato.ritiratoDaCliente = !v.ritiroStato.ritiratoDaCliente;
   save(); renderResiClienti();
 }
+function toggleRcRitatoReso(meseKey, rid){
+  const ms = getMese(meseKey);
+  const r = ms.resi.find(x=>x.id==rid); if(!r)return;
+  r.ritiratoDaCliente = !r.ritiratoDaCliente;
+  save(); renderResiClienti();
+}
+function toggleRcConsegnato(meseKey, vid){
+  const ms = getMese(meseKey);
+  const v = ms.vendite.find(x=>x.id==vid); if(!v)return;
+  if(!v.ritiroStato) v.ritiroStato={};
+  v.ritiroStato.restituitoAlFornitore = !v.ritiroStato.restituitoAlFornitore;
+  save(); renderResiClienti();
+}
+function toggleRcConsegatoReso(meseKey, rid){
+  const ms = getMese(meseKey);
+  const r = ms.resi.find(x=>x.id==rid); if(!r)return;
+  r.restituitoAlFornitore = !r.restituitoAlFornitore;
+  save(); renderResiClienti();
+}
 
+function stampaResiDaRestituire(){
+  const oggi = new Date();
+  const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+  const righe = [];
+  Object.keys(S.mesi).sort().reverse().forEach(k=>{
+    const ms = getMese(k);
+    const [ry,rm] = k.split('-');
+    const nomeMese = `${MESI[+rm-1]} ${ry}`;
+    // vendite ricondizionate già ritirate ma non ancora consegnate al fornitore
+    ms.vendite.filter(v=>v.ricond==='si'&&v.ritiroStato?.ritiratoDaCliente&&!v.ritiroStato?.restituitoAlFornitore).forEach(v=>{
+      righe.push({data:v.data, cliente:v.cnome||'—', articolo:v.art, codice:v.cod||'', fornitore:v.fnome, nomeMese, tipo:'Ricondizionato'});
+    });
+    // resi manuali già ritirati ma non ancora consegnati al fornitore
+    ms.resi.filter(r=>!r._fonte&&r.ritiratoDaCliente&&!r.restituitoAlFornitore).forEach(r=>{
+      const tipoLabel={ricondizionato:'Reso',garanzia:'Difettoso',nogaranzia:'No garanzia',nonconforme:'Non conforme'};
+      righe.push({data:r.data, cliente:r.clienteVendita||'—', articolo:r.desc, codice:r.cod||'', fornitore:r.fnome, nomeMese, tipo:tipoLabel[r.tipo]||r.tipo});
+    });
+  });
+  righe.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const rows = righe.map(({data,cliente,articolo,codice,fornitore,nomeMese,tipo})=>`
+    <tr>
+      <td>${data}</td>
+      <td><strong>${cliente}</strong></td>
+      <td>${articolo}${codice?' ['+codice+']':''}</td>
+      <td>${fornitore}</td>
+      <td style="font-size:11px;color:#666">${nomeMese}</td>
+      <td>${tipo}</td>
+    </tr>`).join('');
+  const win = window.open('','_blank','width=800,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Resi da restituire al fornitore – ${dataStr}</title>
+  <style>
+    body{font-family:sans-serif;font-size:12px;padding:24px;color:#111}
+    h2{font-size:18px;margin-bottom:3px}
+    .sub{font-size:11px;color:#666;margin-bottom:20px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#F3E8FF;padding:7px 12px;text-align:left;font-size:11px;border-bottom:2px solid #9b59b6;color:#5B2C8D;text-transform:uppercase;letter-spacing:0.4px}
+    td{padding:8px 12px;border-bottom:1px solid #EEE;vertical-align:middle}
+    tr:nth-child(even) td{background:#FAF5FF}
+    .footer{font-size:13px;font-weight:700;margin-top:14px;padding:10px 14px;background:#F3E8FF;border-radius:5px;color:#5B2C8D;text-align:right}
+    @media print{body{padding:10px}}
+  </style></head><body>
+  <h2>Resi da restituire al fornitore</h2>
+  <div class="sub">Stampato il: ${dataStr} &nbsp;|&nbsp; Articoli: ${righe.length}</div>
+  <table>
+    <thead><tr><th>Data</th><th>Cliente</th><th>Articolo</th><th>Fornitore</th><th>Mese</th><th>Tipo</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" style="text-align:center;padding:20px;color:#999">Nessun reso da restituire</td></tr>'}</tbody>
+  </table>
+  <div class="footer">Totale: ${righe.length} articoli</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  <\/body><\/html>`);
+  win.document.close();
+}
 function stampaResiClienti(){
   const oggi = new Date();
   const dataStr = `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
@@ -2181,18 +2667,38 @@ function stampaResiClienti(){
     const ms = getMese(k);
     const [ry,rm] = k.split('-');
     const nomeMese = `${MESI[+rm-1]} ${ry}`;
-    ms.vendite.filter(v=>v.ricond==='si'&&!v.ritiroStato?.ritiratoDaCliente).forEach(v=>{
-      righe.push({v, nomeMese});
+    // vendite ricondizionate non ancora consegnate al fornitore
+    ms.vendite.filter(v=>v.ricond==='si'&&!v.ritiroStato?.restituitoAlFornitore&&!v.ritiroStato?.ritiratoDaCliente).forEach(v=>{
+      righe.push({
+        data: v.data, cliente: v.cnome||'—', articolo: v.art,
+        codice: v.cod||'', fornitore: v.fnome, nomeMese,
+        ritirato: v.ritiroStato?.ritiratoDaCliente||false,
+        tipo: 'Ricondizionato'
+      });
+    });
+    // resi manuali non ancora consegnati al fornitore e non ancora ritirati
+    ms.resi.filter(r=>!r._fonte&&!r.restituitoAlFornitore&&!r.ritiratoDaCliente).forEach(r=>{
+      const tipoLabel={ricondizionato:'Reso',garanzia:'Difettoso',nogaranzia:'No garanzia',nonconforme:'Non conforme'};
+      righe.push({
+        data: r.data, cliente: r.clienteVendita||'—', articolo: r.desc,
+        codice: r.cod||'', fornitore: r.fnome, nomeMese,
+        ritirato: r.ritiratoDaCliente||false,
+        tipo: tipoLabel[r.tipo]||r.tipo
+      });
     });
   });
 
-  const rows = righe.map(({v,nomeMese})=>`
+  righe.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+
+  const rows = righe.map(({data,cliente,articolo,codice,fornitore,nomeMese,ritirato,tipo})=>`
     <tr>
-      <td>${v.data}</td>
-      <td><strong>${v.cnome}</strong></td>
-      <td>${v.art}${v.cod?' ['+v.cod+']':''}</td>
-      <td>${v.fnome}</td>
+      <td>${data}</td>
+      <td><strong>${cliente}</strong></td>
+      <td>${articolo}${codice?' ['+codice+']':''}</td>
+      <td>${fornitore}</td>
       <td style="font-size:11px;color:#666">${nomeMese}</td>
+      <td>${tipo}</td>
+      <td style="text-align:center">${ritirato?'✓':'—'}</td>
     </tr>`).join('');
 
   const win = window.open('','_blank','width=800,height=700');
@@ -2210,20 +2716,26 @@ function stampaResiClienti(){
     @media print{body{padding:10px}}
   </style></head><body>
   <h2>Resi clienti da ritirare</h2>
-  <div class="sub">Stampato il: ${dataStr} &nbsp;|&nbsp; Articoli da ritirare: ${righe.length}</div>
+  <div class="sub">Stampato il: ${dataStr} &nbsp;|&nbsp; Articoli: ${righe.length}</div>
   <table>
     <thead><tr>
-      <th>Data vendita</th><th>Cliente</th><th>Articolo da ritirare</th><th>Fornitore</th><th>Mese</th>
+      <th>Data</th><th>Cliente</th><th>Articolo</th><th>Fornitore</th><th>Mese</th><th>Tipo</th><th>Ritirato</th>
     </tr></thead>
-    <tbody>${rows||'<tr><td colspan="5" style="text-align:center;padding:20px;color:#999">Nessun reso da ritirare</td></tr>'}</tbody>
+    <tbody>${rows||'<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Nessun reso da ritirare</td></tr>'}</tbody>
   </table>
-  <div class="footer">Totale da ritirare: ${righe.length} articoli</div>
+  <div class="footer">Totale: ${righe.length} articoli</div>
   <script>window.onload=()=>{window.print();}<\/script>
   <\/body><\/html>`);
   win.document.close();
 }
 
 // ---- INSOLUTI CLIENTI ----
+function delVenditaDaInsoluti(meseKey, vid){
+  if(!confirm('Eliminare questa vendita dagli insoluti?')) return;
+  const ms = getMese(meseKey);
+  ms.vendite = ms.vendite.filter(v=>v.id!=vid);
+  save(); render(); renderInsoluti();
+}
 function getInsolutiPerMese(){
   // raccoglie tutti gli insoluti da tutti i mesi, raggruppati per mese
   const risultati = []; // [{meseKey, nomeMese, righe:[{data,cnome,art,fnome,saldo,stato}], totale}]
@@ -2235,7 +2747,7 @@ function getInsolutiPerMese(){
     const righe = ms.vendite
       .filter(v=>v.stato==='nonpagato'||v.stato==='acconto')
       .map(v=>({
-        data:v.data, cnome:v.cnome, art:v.art, fnome:v.fnome,
+        id:v.id, data:v.data, cnome:v.cnome, art:v.art, fnome:v.fnome,
         saldo: v.stato==='acconto' ? parseFloat((v.totLordo-(v.acconto||0)).toFixed(2)) : v.totLordo,
         stato: v.stato, acconto: v.acconto||0, ricond: v.ricond
       })).sort((a,b)=>a.cnome.localeCompare(b.cnome));
@@ -2263,7 +2775,7 @@ function renderInsoluti(){
       </div>
       <div class="table-wrap"><table style="border:1px solid #F0B0B0;border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);overflow:hidden">
         <thead><tr>
-          <th>Data vendita</th><th>Cliente</th><th>Articolo</th><th style="color:var(--red3)">Saldo da dare</th><th>Stato</th>
+          <th>Data vendita</th><th>Cliente</th><th>Articolo</th><th style="color:var(--red3)">Saldo da dare</th><th>Stato</th><th></th>
         </tr></thead>
         <tbody>
           ${d.righe.map(r=>`<tr>
@@ -2272,6 +2784,7 @@ function renderInsoluti(){
             <td>${r.art}${r.ricond==='si'?'<span class="badge b-pink" style="margin-left:6px;font-size:10px">da ritirare</span>':''}</td>
             <td style="font-weight:700;color:var(--red3);font-size:14px">${fmt(r.saldo)}</td>
             <td><span class="badge ${r.stato==='acconto'?'b-amber':'b-red'}">${r.stato==='acconto'?'Acc. dato: '+fmt(r.acconto):'Non pagato'}</span></td>
+            <td><button class="btn danger" style="padding:3px 10px;font-size:12px" onclick="delVenditaDaInsoluti('${d.meseKey}',${r.id})">✕</button></td>
           </tr>`).join('')}
         </tbody>
       </table></div>
@@ -2529,7 +3042,7 @@ function toggleRicondCheck(meseKey, vid, campo){
   if(!v) return;
   if(!v.ritiroStato) v.ritiroStato = {};
   v.ritiroStato[campo] = !v.ritiroStato[campo];
-  save(); renderRitiri();
+  save();
 }
 
 function stampRicond(){
@@ -2588,6 +3101,115 @@ function stampRicond(){
   win.document.close();
 }
 
+function apriGestioneDebitiVecchi(){
+  const modal = document.getElementById('dv-modal');
+  modal.style.display = 'flex';
+  document.getElementById('dv-overlay').style.display = 'block';
+  renderGestioneDebitiVecchi();
+}
+function chiudiGestioneDebitiVecchi(){
+  document.getElementById('dv-modal').style.display = 'none';
+  document.getElementById('dv-overlay').style.display = 'none';
+}
+function renderGestioneDebitiVecchi(){
+  if(!S.debitiVecchi) S.debitiVecchi = {};
+  const chiavi = Object.keys(S.mesi).sort().reverse();
+  if(!chiavi.includes(meseAttivo)) chiavi.unshift(meseAttivo);
+
+  // Raggruppa fornitori per creditore
+  const gruppi = {};   // creditore → [fornitori]
+  const singoli = [];  // fornitori senza creditore
+  S.fornitori.forEach(function(f){
+    if(f.creditore){ if(!gruppi[f.creditore]) gruppi[f.creditore]=[]; gruppi[f.creditore].push(f); }
+    else singoli.push(f);
+  });
+
+  function campiMese(chiavi, keyFn, labelFn){
+    // keyFn(k) → chiave debito, labelFn opzionale
+    return '<div style="display:flex;flex-wrap:wrap;gap:10px">'
+      +chiavi.map(function(k){
+        const [y,m]=k.split('-');
+        const nomeMese=MESI[+m-1]+' '+y;
+        const val = S.debitiVecchi[keyFn(k)]||'';
+        return '<div style="display:flex;flex-direction:column;gap:3px;min-width:130px">'
+          +'<label style="font-size:11px;font-weight:600;color:var(--text2)">'+nomeMese+'</label>'
+          +'<input type="number" step="0.01" min="0" placeholder="0.00" value="'+val+'"'
+          +' onchange="('+keyFn.toString()+')" data-key="'+keyFn(k)+'"'
+          +' oninput="salvaDVDaModalKey(this.getAttribute(\'data-key\'),this.value)"'
+          +' style="width:120px;padding:6px 10px;border:1.5px solid var(--purple);border-radius:6px;font-family:\'DM Mono\',monospace;font-size:13px;font-weight:600;color:var(--purple);outline:none;text-align:right">'
+          +'</div>';
+      }).join('')+'</div>';
+  }
+
+  let html = '';
+
+  // Blocchi GAVAZZA (un campo per mese che vale per tutti i fornitori del gruppo)
+  Object.entries(gruppi).forEach(function(entry){
+    const nomeCred=entry[0], flist=entry[1];
+    const nomiFor = flist.map(function(f){return f.nome;}).join(', ');
+    // usiamo la chiave aggregata del creditore: dvcred_GAVAZZA_MESEK
+    html += '<div style="margin-bottom:1.2rem;border:2px solid var(--teal);border-radius:var(--radius);overflow:hidden">'
+      +'<div style="padding:10px 14px;background:var(--teal2);border-bottom:1px solid var(--teal);display:flex;align-items:baseline;gap:10px">'
+      +'<span style="font-weight:800;color:var(--teal);font-size:16px">'+nomeCred+'</span>'
+      +'<span style="font-size:11px;color:var(--teal);opacity:0.8">('+nomiFor+')</span>'
+      +'</div>'
+      +'<div style="padding:10px 14px">'
+      +'<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Il valore inserito vale come debito totale del gruppo '+nomeCred+' per quel mese</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:10px">'
+      +chiavi.map(function(k){
+        const [y,m]=k.split('-');
+        const nomeMese=MESI[+m-1]+' '+y;
+        const dvKey='dvcred_'+nomeCred+'_'+k;
+        const val=S.debitiVecchi[dvKey]||'';
+        return '<div style="display:flex;flex-direction:column;gap:3px;min-width:130px">'
+          +'<label style="font-size:11px;font-weight:600;color:var(--teal)">'+nomeMese+'</label>'
+          +'<input type="number" step="0.01" min="0" placeholder="0.00" value="'+val+'"'
+          +' onchange="salvaDVDaModalKey(\''+dvKey+'\',this.value)"'
+          +' style="width:120px;padding:6px 10px;border:1.5px solid var(--teal);border-radius:6px;font-family:\'DM Mono\',monospace;font-size:13px;font-weight:600;color:var(--teal);outline:none;text-align:right">'
+          +'</div>';
+      }).join('')
+      +'</div></div></div>';
+  });
+
+  // Blocchi singoli
+  singoli.forEach(function(f){
+    html += '<div style="margin-bottom:1.2rem;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden">'
+      +'<div style="padding:10px 14px;background:var(--purple2);border-bottom:1px solid var(--purple)">'
+      +'<span style="font-weight:700;color:var(--purple);font-size:14px">'+f.nome+'</span></div>'
+      +'<div style="padding:10px 14px"><div style="display:flex;flex-wrap:wrap;gap:10px">'
+      +chiavi.map(function(k){
+        const [y,m]=k.split('-');
+        const nomeMese=MESI[+m-1]+' '+y;
+        const dvKey='dv_'+f.id+'_'+k;
+        const val=S.debitiVecchi[dvKey]||'';
+        return '<div style="display:flex;flex-direction:column;gap:3px;min-width:130px">'
+          +'<label style="font-size:11px;font-weight:600;color:var(--text2)">'+nomeMese+'</label>'
+          +'<input type="number" step="0.01" min="0" placeholder="0.00" value="'+val+'"'
+          +' onchange="salvaDVDaModalKey(\''+dvKey+'\',this.value)"'
+          +' style="width:120px;padding:6px 10px;border:1.5px solid var(--purple);border-radius:6px;font-family:\'DM Mono\',monospace;font-size:13px;font-weight:600;color:var(--purple);outline:none;text-align:right">'
+          +'</div>';
+      }).join('')
+      +'</div></div></div>';
+  });
+
+  if(!S.fornitori.length) html='<div style="text-align:center;padding:2rem;color:var(--text3)">Nessun fornitore registrato</div>';
+  document.getElementById('dv-body').innerHTML = html;
+}
+function salvaDVDaModalKey(key, val){
+  if(!S.debitiVecchi) S.debitiVecchi={};
+  const v=parseFloat(val)||0;
+  if(v>0) S.debitiVecchi[key]=v;
+  else delete S.debitiVecchi[key];
+  save(); render();
+}
+function salvaDVDaModal(fid, meseKey, val){
+  if(!S.debitiVecchi) S.debitiVecchi = {};
+  const key = 'dv_'+fid+'_'+meseKey;
+  const v = parseFloat(val)||0;
+  if(v>0) S.debitiVecchi[key] = v;
+  else delete S.debitiVecchi[key];
+  save(); render();
+}
 function editDebitoVecchio(fid, meseKey){
   const dvKey=`dv_${fid}_${meseKey}`;
   const attuale=(S.debitiVecchi&&S.debitiVecchi[dvKey])||0;
@@ -2606,74 +3228,6 @@ function salvaDebitoVecchio(fid, meseKey, val){
   else delete S.debitiVecchi[key];
   save();
 }
-
-function renderRitiri(){
-  const tbody = $('tbl-ritiri');
-  const stats = $('ritiri-stats');
-  const nascondi = $('chk-nascondi-completati') && $('chk-nascondi-completati').checked;
-
-  // Raccogli tutte le vendite ricondizionate da tutti i mesi
-  const righe = [];
-  Object.keys(S.mesi).sort().reverse().forEach(k=>{
-    const ms = getMese(k);
-    const [ry,rm] = k.split('-');
-    ms.vendite.filter(v=>v.ricond==='si').forEach(v=>{
-      righe.push({v, k, nomeMese:`${MESI[+rm-1]} ${ry}`});
-    });
-  });
-
-  // Statistiche
-  const totale = righe.length;
-  const ritirati = righe.filter(({v})=>v.ritiroStato?.ritiratoDaCliente).length;
-  const restituiti = righe.filter(({v})=>v.ritiroStato?.restituitoAlFornitore).length;
-  const completi = righe.filter(({v})=>v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore).length;
-  const daFare = totale - completi;
-
-  stats.innerHTML = `
-    <div class="metric m-blue"><div class="m-label">Totale ricondizionati</div><div class="m-value blue">${totale}</div></div>
-    <div class="metric m-amber"><div class="m-label">Ritirati dal cliente</div><div class="m-value amber">${ritirati}</div></div>
-    <div class="metric m-green"><div class="m-label">Restituiti al fornitore</div><div class="m-value green">${restituiti}</div></div>
-    <div class="metric m-green"><div class="m-label">Completati</div><div class="m-value green">${completi}</div></div>
-    <div class="metric ${daFare>0?'m-red':'m-green'}"><div class="m-label">Da gestire</div><div class="m-value ${daFare>0?'red':'green'}">${daFare}</div></div>
-  `;
-
-  const righeVis = nascondi ? righe.filter(({v})=>!(v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore)) : righe;
-
-  if(!righeVis.length){
-    tbody.innerHTML = `<tr><td colspan="12" class="empty-row">${totale===0?'Nessuna vendita ricondizionata registrata':'Tutti gli articoli sono stati gestiti!'}</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = righeVis.map(({v, k, nomeMese})=>{
-    const completata = v.ritiroStato?.ritiratoDaCliente && v.ritiroStato?.restituitoAlFornitore;
-    const rs = v.ritiroStato || {};
-    return `<tr style="${completata?'opacity:0.5':''}">
-      <td style="font-size:11px;white-space:nowrap">${v.data}</td>
-      <td style="font-size:11px;white-space:nowrap">${nomeMese}</td>
-      <td><code style="font-family:'DM Mono',monospace;font-size:11px">${v.cod||'—'}</code></td>
-      <td style="font-weight:500">${v.art}</td>
-      <td>${v.cnome}</td>
-      <td>${v.fnome}</td>
-      <td style="text-align:center">${v.qty}</td>
-      <td>${fmt(v.prez)}</td>
-      <td>${v.socio}</td>
-      <td style="font-size:11px;color:var(--text2);max-width:90px">${v.note||'—'}</td>
-      <td class="check-cell">
-        <input type="checkbox" ${rs.ritiratoDaCliente?'checked':''}
-          onchange="toggleRicondCheck('${k}',${v.id},'ritiratoDaCliente')"
-          style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
-      </td>
-      <td class="check-cell">
-        <input type="checkbox" ${rs.restituitoAlFornitore?'checked':''}
-          onchange="toggleRicondCheck('${k}',${v.id},'restituitoAlFornitore')"
-          style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-// ---- AUTOCOMPLETE ARTICOLO ----
-let artAcIdx = -1;
 
 function getArticoliStorici(){
   // raccoglie articoli unici da tutte le vendite di tutti i mesi
@@ -2985,7 +3539,21 @@ function importaClientiPDF(){
   save(); render();
 }
 
-
+function resetTuttiIDati(){
+  if(!confirm('⚠️ ATTENZIONE!\n\nStai per eliminare TUTTI i dati contabili:\n- Tutte le vendite di tutti i mesi\n- Tutte le spese\n- Tutti i resi\n- Tutti gli acconti\n- Tutti i debiti vecchi\n\nFornitori e clienti verranno mantenuti.\n\nSei sicuro?')) return;
+  if(!confirm('Ultima conferma: eliminare tutti i dati contabili?')) return;
+  S.mesi = {};
+  S.debitiVecchi = {};
+  save(); render();
+  alert('✅ Tutti i dati contabili azzerati.\nFornitori e clienti mantenuti.');
+}
+function resetCompleto(){
+  if(!confirm('⚠️ RESET COMPLETO!\n\nVerranno eliminati TUTTI i dati inclusi fornitori e clienti.\nSei assolutamente sicuro?')) return;
+  if(!confirm('Ultima conferma: RESET TOTALE?')) return;
+  S = { fornitori:[], clienti:[], mesi:{}, debitiVecchi:{} };
+  save(); render();
+  alert('✅ Reset completo. Il gestionale è come nuovo.');
+}
 </script>
 </body>
 </html>
