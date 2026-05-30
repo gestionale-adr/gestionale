@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Quiz VVF</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f3f0;color:#1a1a1a;min-height:100vh}
+.page{display:none}.page.on{display:block}
+
+/* HOME */
+.hero{background:#b91c1c;padding:44px 20px 30px;text-align:center}
+.hero-ico{font-size:52px}
+.hero-h1{font-size:22px;font-weight:700;color:#fff;margin-top:8px}
+.hero-sub{font-size:13px;color:rgba(255,255,255,.75);margin-top:3px}
+.hero-src{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+.home-body{padding:18px 14px;max-width:460px;margin:0 auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.icard{background:#fff;border-radius:13px;padding:14px 10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+.icard-ico{font-size:20px}
+.icard-val{font-size:17px;font-weight:700;margin-top:3px}
+.icard-lab{font-size:11px;color:#6b7280;margin-top:1px}
+.sec-label{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.mat-list{display:flex;flex-direction:column;gap:7px;margin-bottom:20px}
+.mat-row{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:10px 13px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.mat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.mat-nome{font-size:13px;font-weight:500;flex:1}
+.mat-cnt{font-size:11px;color:#9ca3af}
+.btn-main{width:100%;background:#b91c1c;color:#fff;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-main:active{opacity:.85}
+
+/* QUIZ */
+.qhdr{background:#b91c1c;padding:11px 14px 9px;position:sticky;top:0;z-index:10}
+.qhdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.q-cnt{font-size:12px;color:rgba(255,255,255,.8)}
+.q-timer{font-family:monospace;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,.15);padding:3px 9px;border-radius:20px;transition:color .3s}
+.q-timer.ora{color:#fbbf24}.q-timer.red{color:#ff8080}
+.prog-bg{background:rgba(255,255,255,.2);border-radius:4px;height:3px}
+.prog-bar{background:#fff;border-radius:4px;height:3px;transition:width .4s}
+.qbody{padding:14px 14px 28px;max-width:460px;margin:0 auto}
+.qbadge-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.mat-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
+.pt-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:#dcfce7;color:#15803d}
+.q-testo{font-size:16px;font-weight:500;line-height:1.55;margin-bottom:16px;color:#1a1a1a}
+.opt-list{display:flex;flex-direction:column;gap:9px;margin-bottom:13px}
+.opt-btn{display:flex;align-items:flex-start;gap:10px;background:#fff;border:1.5px solid #e5e7eb;border-radius:13px;padding:12px;cursor:pointer;text-align:left;width:100%;font-family:inherit;transition:border-color .15s,background .15s}
+.opt-btn:active{opacity:.8}
+.opt-btn.ok{background:#dcfce7;border-color:#15803d}
+.opt-btn.err{background:#fee2e2;border-color:#b91c1c}
+.opt-let{width:26px;height:26px;border-radius:50%;border:1.5px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9ca3af;flex-shrink:0;margin-top:1px;transition:all .15s}
+.opt-btn.ok .opt-let{background:#15803d;border-color:#15803d;color:#fff}
+.opt-btn.err .opt-let{background:#b91c1c;border-color:#b91c1c;color:#fff}
+.opt-txt{font-size:14px;color:#1a1a1a;line-height:1.4;flex:1;padding-top:3px}
+.opt-ico{font-size:16px;flex-shrink:0;padding-top:3px}
+.btn-avanti{width:100%;background:#b91c1c;color:#fff;border:none;border-radius:13px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:none}
+.btn-avanti.on{display:block}
+.btn-avanti:active{opacity:.85}
+
+/* RISULTATI */
+.res-hero{background:#b91c1c;padding:30px 20px 22px;text-align:center}
+.res-ico{font-size:52px}
+.res-score{font-size:42px;font-weight:700;color:#fff;line-height:1;margin-top:6px}
+.res-perc{font-size:17px;color:rgba(255,255,255,.72);margin-top:3px}
+.res-msg{font-size:13px;color:rgba(255,255,255,.82);margin-top:8px}
+.res-body{padding:18px 14px 32px;max-width:460px;margin:0 auto}
+.mat-res{background:#fff;border-radius:13px;padding:13px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.mat-res-hdr{display:flex;justify-content:space-between;margin-bottom:7px}
+.mat-res-nome{font-size:13px;font-weight:500}
+.mat-res-pt{font-size:12px;font-weight:700}
+.bar-bg{background:#e5e7eb;border-radius:4px;height:5px}
+.bar-fill{border-radius:4px;height:5px;transition:width .8s}
+
+/* ERRORI */
+.errori-sezione{margin-top:18px}
+.errori-titolo{font-size:12px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.errore-card{background:#fff;border-radius:13px;padding:13px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);border-left:3px solid #b91c1c}
+.errore-num{font-size:10px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.errore-domanda{font-size:13px;font-weight:500;color:#1a1a1a;margin-bottom:8px;line-height:1.4}
+.errore-row{display:flex;align-items:flex-start;gap:7px;margin-bottom:4px}
+.errore-row:last-child{margin-bottom:0}
+.errore-label{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0;margin-top:1px}
+.label-data{background:#fee2e2;color:#b91c1c}
+.label-ok{background:#dcfce7;color:#15803d}
+.errore-testo{font-size:12px;color:#374151;line-height:1.4}
+
+/* WHATSAPP BTN */
+.btn-wa{width:100%;background:#25D366;color:#fff;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-wa:active{opacity:.85}
+.btn-wa svg{width:20px;height:20px;fill:#fff;flex-shrink:0}
+.btn-ricomincia{width:100%;background:#b91c1c;color:#fff;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px}
+.btn-ricomincia:active{opacity:.85}
+
+/* TOGGLE errori */
+.toggle-errori{width:100%;background:#fff;color:#b91c1c;border:1.5px solid #b91c1c;border-radius:13px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px}
+.toggle-errori:active{opacity:.8}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="page on">
+  <div class="hero">
+    <div class="hero-ico">🚒</div>
+    <div class="hero-h1">Quiz VVF</div>
+    <div class="hero-sub">Simulatore Concorso 350 posti 2024</div>
+    <div class="hero-src">Banca dati ufficiale · mininterno.net</div>
+  </div>
+  <div class="home-body">
+    <div class="grid2">
+      <div class="icard"><div class="icard-ico">📋</div><div class="icard-val">40</div><div class="icard-lab">Domande</div></div>
+      <div class="icard"><div class="icard-ico">⏱️</div><div class="icard-val">40 min</div><div class="icard-lab">Tempo</div></div>
+      <div class="icard"><div class="icard-ico">🔘</div><div class="icard-val">4</div><div class="icard-lab">Opzioni</div></div>
+      <div class="icard"><div class="icard-ico">🏅</div><div class="icard-val">10×</div><div class="icard-lab">Ammessi</div></div>
+    </div>
+    <div class="sec-label">Materie</div>
+    <div class="mat-list" id="mat-list"></div>
+    <button class="btn-main" onclick="avviaQuiz()">▶ Inizia simulazione</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="page">
+  <div class="qhdr">
+    <div class="qhdr-row">
+      <span class="q-cnt" id="q-cnt">Dom. 1/40</span>
+      <span class="q-timer" id="q-timer">40:00</span>
+    </div>
+    <div class="prog-bg"><div class="prog-bar" id="prog-bar" style="width:2.5%"></div></div>
+  </div>
+  <div class="qbody">
+    <div class="qbadge-row">
+      <span class="mat-badge" id="mat-badge"></span>
+      <span class="pt-badge" id="pt-badge">✅ 0</span>
+    </div>
+    <div class="q-testo" id="q-testo"></div>
+    <div class="opt-list" id="opt-list"></div>
+    <button class="btn-avanti" id="btn-avanti" onclick="avanti()">Prossima domanda →</button>
+  </div>
+</div>
+
+<!-- RISULTATI -->
+<div id="risultati" class="page">
+  <div class="res-hero">
+    <div class="res-ico" id="res-ico"></div>
+    <div class="res-score" id="res-score"></div>
+    <div class="res-perc" id="res-perc"></div>
+    <div class="res-msg" id="res-msg"></div>
+  </div>
+  <div class="res-body">
+    <div class="sec-label" style="margin-bottom:12px">Per materia</div>
+    <div id="res-materie"></div>
+
+    <!-- Bottone WhatsApp -->
+    <button class="btn-wa" onclick="condividiWhatsApp()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.528 5.858L.057 23.625a.75.75 0 0 0 .918.919l5.857-1.47A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.523-5.188-1.432l-.372-.223-3.876.972.989-3.784-.245-.389A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Invia risultato su WhatsApp
+    </button>
+
+    <!-- Toggle errori -->
+    <button class="toggle-errori" onclick="toggleErrori()" id="btn-toggle-errori">
+      ❌ Mostra risposte sbagliate
+    </button>
+
+    <!-- Sezione errori (nascosta di default) -->
+    <div class="errori-sezione" id="errori-sezione" style="display:none">
+      <div class="errori-titolo">❌ Risposte sbagliate</div>
+      <div id="errori-lista"></div>
+    </div>
+
+    <button class="btn-ricomincia" onclick="ricomincia()">↻ Nuovo Quiz</button>
+  </div>
+</div>
+
+<script>
+var MATERIE={
+  storia:{nome:"Storia",colore:"#1d4ed8",sfondo:"#dbeafe",dot:"#3b82f6"},
+  logica:{nome:"Logica",colore:"#92400e",sfondo:"#fef3c7",dot:"#f59e0b"},
+  chimica:{nome:"Chimica",colore:"#065f46",sfondo:"#d1fae5",dot:"#10b981"},
+  fisica:{nome:"Fisica",colore:"#0e7490",sfondo:"#cffafe",dot:"#06b6d4"},
+  informatica:{nome:"Informatica",colore:"#5b21b6",sfondo:"#ede9fe",dot:"#8b5cf6"},
+  inglese:{nome:"Inglese",colore:"#9d174d",sfondo:"#fce7f3",dot:"#ec4899"}
+};
+
+var BANCA=[
+  {t:"A chi dichiarò guerra l'Austria nel 1914?",o:["Alla Francia","Alla Serbia","Alla Russia","All'Inghilterra"],r:1,m:"storia"},
+  {t:"A chi fu affidato il comando durante la guerra italo-etiope?",o:["Luigi Cadorna","Emilio De Bono","Pietro Badoglio","Rodolfo Graziani"],r:2,m:"storia"},
+  {t:"A cosa pose fine il Patto di Londra del 26 aprile 1915?",o:["Alla guerra italo-turca","Alla Triplice Alleanza","Alla neutralità italiana","All'occupazione di Trento"],r:2,m:"storia"},
+  {t:"A quale leader si deve la 'svolta di Salerno'?",o:["Pietro Nenni","Alcide De Gasperi","Palmiro Togliatti","Ferruccio Parri"],r:2,m:"storia"},
+  {t:"A quale partito apparteneva Luigi Einaudi?",o:["Democrazia Cristiana","Partito Socialista","Partito Liberale","Partito d'Azione"],r:2,m:"storia"},
+  {t:"A quale partito fu attribuito il ministero degli Interni nella prima Repubblica?",o:["Partito Socialista","Partito Liberale","Partito Repubblicano","Democrazia Cristiana"],r:3,m:"storia"},
+  {t:"Mussolini apparteneva a quale partito prima della Prima Guerra Mondiale?",o:["Nazionalista","Liberale","Socialista","Radicale"],r:2,m:"storia"},
+  {t:"Quale territorio l'Italia NON ottenne dopo la Prima Guerra Mondiale?",o:["Venezia Giulia","Istria","Dalmazia","Alto Adige"],r:2,m:"storia"},
+  {t:"Chi fu il primo Presidente della Repubblica Italiana?",o:["Alcide De Gasperi","Luigi Einaudi","Enrico De Nicola","Giovanni Gronchi"],r:2,m:"storia"},
+  {t:"In quale anno fu proclamato il Regno d'Italia?",o:["1848","1870","1861","1876"],r:2,m:"storia"},
+  {t:"In quale anno l'Italia entrò nella Prima Guerra Mondiale?",o:["1914","1916","1915","1917"],r:2,m:"storia"},
+  {t:"I Patti Lateranensi del 1929 regolavano i rapporti tra lo Stato e:",o:["La Francia","La Santa Sede","La Società delle Nazioni","Il Regno di Grecia"],r:1,m:"storia"},
+  {t:"Il 'miracolo economico' italiano si collocò negli anni:",o:["1948-1952","1958-1963","1970-1975","1980-1985"],r:1,m:"storia"},
+  {t:"La Costituzione italiana è entrata in vigore il:",o:["2 giugno 1946","25 aprile 1945","18 aprile 1948","1 gennaio 1948"],r:3,m:"storia"},
+  {t:"Al termine di quale guerra il Veneto fu annesso all'Italia?",o:["Prima guerra d'indipendenza","Seconda guerra d'indipendenza","Terza guerra d'indipendenza","Prima Guerra Mondiale"],r:2,m:"storia"},
+  {t:"La campagna del 1925 contro le importazioni cerealicole si chiamava:",o:["La battaglia per la lira","La battaglia del grano","La battaglia demografica","La riforma agraria"],r:1,m:"storia"},
+  {t:"La riforma scolastica di Giovanni Gentile risale al:",o:["1915","1919","1923","1929"],r:2,m:"storia"},
+  {t:"L'alternativa alla Repubblica nel referendum del 2 giugno 1946 era:",o:["Federazione","Principato","Monarchia","Protettorato"],r:2,m:"storia"},
+  {t:"A cosa diedero vita le Camere del Lavoro e le leghe contadine nel 1906?",o:["Al Partito Socialista","Alla CGdL (CGIL)","Alla UIL","Alla Confindustria"],r:1,m:"storia"},
+  {t:"La linea gotica del 1944 si attestava fra:",o:["Napoli e Roma","Firenze e Bologna","Rimini e La Spezia","Milano e Torino"],r:2,m:"storia"},
+  {t:"Completare la serie: 3, 6, 12, 24, ___",o:["36","48","42","30"],r:1,m:"logica"},
+  {t:"Un treno percorre 180 km in 2 ore. Quanti km in 5 ore?",o:["360 km","450 km","400 km","500 km"],r:1,m:"logica"},
+  {t:"Quale numero manca? 100, 91, 83, 76, ___",o:["72","69","70","68"],r:2,m:"logica"},
+  {t:"Se A > B e C < B, chi è il più alto?",o:["B","C","A","Non determinabile"],r:2,m:"logica"},
+  {t:"5 uomini e 3 donne. Quale percentuale sono donne?",o:["30%","40%","37,5%","35%"],r:2,m:"logica"},
+  {t:"Mario impiega 4h, Luca 6h per una stanza. Tempo insieme?",o:["2h 24min","5 ore","3 ore","2 ore"],r:0,m:"logica"},
+  {t:"ABCD : BCDE = MNOP : ___",o:["NOPQ","OPQR","LMNO","MNOP"],r:0,m:"logica"},
+  {t:"Quanti secondi in 2 ore e 15 minuti?",o:["7.500","8.100","8.500","7.800"],r:1,m:"logica"},
+  {t:"Se oggi è mercoledì, che giorno sarà tra 18 giorni?",o:["Lunedì","Sabato","Domenica","Venerdì"],r:2,m:"logica"},
+  {t:"Tutti i pompieri sono coraggiosi, alcuni coraggiosi sono sportivi. Cosa è necessariamente vera?",o:["Tutti i pompieri sono sportivi","Alcuni pompieri potrebbero essere sportivi","Nessun pompiere è sportivo","Tutti gli sportivi sono pompieri"],r:1,m:"logica"},
+  {t:"Quante diagonali ha un pentagono regolare?",o:["4","5","6","8"],r:1,m:"logica"},
+  {t:"Sconto 20% su 150 euro. Prezzo finale?",o:["120 euro","130 euro","110 euro","125 euro"],r:0,m:"logica"},
+  {t:"3 rosse, 4 blu, 5 verdi. Probabilità di estrarne una rossa?",o:["1/4","1/5","1/3","1/6"],r:0,m:"logica"},
+  {t:"Quale numero aggiunto al suo triplo dà 48?",o:["10","12","14","16"],r:1,m:"logica"},
+  {t:"Serie: 2, 5, 10, 17, 26, ___",o:["35","37","36","38"],r:1,m:"logica"},
+  {t:"Recipiente riempie in 12 min, buco svuota in 18 min. Tempo con buco aperto?",o:["30 min","36 min","24 min","40 min"],r:1,m:"logica"},
+  {t:"3X + 7 = 22. X = ?",o:["4","5","6","3"],r:1,m:"logica"},
+  {t:"Quante facce ha un cubo?",o:["4","8","6","12"],r:2,m:"logica"},
+  {t:"Due corridori a 8 e 12 km/h in direzioni opposte. Ore per distare 100 km?",o:["4 ore","5 ore","6 ore","3 ore"],r:1,m:"logica"},
+  {t:"SOLE : CALDO = NEVE : ___",o:["BIANCO","FREDDO","INVERNO","GHIACCIO"],r:1,m:"logica"},
+  {t:"Simbolo chimico del sodio?",o:["So","Sd","Na","Sa"],r:2,m:"chimica"},
+  {t:"Formula chimica dell'acqua?",o:["HO","H2O2","H2O","OH2"],r:2,m:"chimica"},
+  {t:"Quale è una reazione di combustione?",o:["NaCl → Na + Cl","C + O2 → CO2","H2O → H2 + O","Fe + S → FeS"],r:1,m:"chimica"},
+  {t:"Il pH di una soluzione neutra è:",o:["0","7","14","5"],r:1,m:"chimica"},
+  {t:"Quale gas è più presente nell'atmosfera terrestre?",o:["Ossigeno","Anidride carbonica","Azoto","Argon"],r:2,m:"chimica"},
+  {t:"Quale elemento è un metallo alcalino?",o:["Cloro","Potassio","Ferro","Carbonio"],r:1,m:"chimica"},
+  {t:"Quanti protoni ha l'atomo di idrogeno?",o:["0","1","2","3"],r:1,m:"chimica"},
+  {t:"Formula chimica del sale da cucina?",o:["NaOH","KCl","NaCl","CaCl2"],r:2,m:"chimica"},
+  {t:"Quanti elementi nella tavola periodica moderna?",o:["98","108","118","128"],r:2,m:"chimica"},
+  {t:"Numero atomico del carbonio?",o:["4","6","8","12"],r:1,m:"chimica"},
+  {t:"Soluzione con pH < 7 è:",o:["Neutra","Basica","Acida","Salina"],r:2,m:"chimica"},
+  {t:"Quale gas produce la fotosintesi clorofilliana?",o:["CO2","N2","O2","H2"],r:2,m:"chimica"},
+  {t:"Formula chimica del glucosio?",o:["C6H12O6","C12H22O11","C2H5OH","CH4"],r:0,m:"chimica"},
+  {t:"Simbolo chimico del ferro?",o:["Fr","Fe","Fi","Fo"],r:1,m:"chimica"},
+  {t:"Quale è un gas nobile?",o:["Azoto","Ossigeno","Argon","Idrogeno"],r:2,m:"chimica"},
+  {t:"Massa 10 kg, accelerazione 3 m/s2. Forza? (F=ma)",o:["13 N","30 N","3 N","300 N"],r:1,m:"fisica"},
+  {t:"A quanti gradi bolle l'acqua a pressione atmosferica?",o:["90C","120C","100C","110C"],r:2,m:"fisica"},
+  {t:"Velocità della luce nel vuoto?",o:["300.000 km/s","30.000 km/s","3.000 km/s","3.000.000 km/s"],r:0,m:"fisica"},
+  {t:"Unità di misura della forza nel SI?",o:["Joule","Watt","Newton","Pascal"],r:2,m:"fisica"},
+  {t:"Formula della velocità media?",o:["v = m x a","v = s/t","v = F/m","v = P x t"],r:1,m:"fisica"},
+  {t:"Unità di misura della pressione nel SI?",o:["Newton","Joule","Pascal","Bar"],r:2,m:"fisica"},
+  {t:"Legge di Ohm: V = ___",o:["I/R","R/I","I x R","I+R"],r:2,m:"fisica"},
+  {t:"Accelerazione di gravità sulla Terra?",o:["8,9 m/s2","9,8 m/s2","10,8 m/s2","7,9 m/s2"],r:1,m:"fisica"},
+  {t:"Energia cinetica di un corpo?",o:["Ec = mgh","Ec = 1/2 mv2","Ec = Fv","Ec = mv"],r:1,m:"fisica"},
+  {t:"Punto di fusione del ghiaccio?",o:["-10C","0C","4C","100C"],r:1,m:"fisica"},
+  {t:"Come si chiama il cambio di direzione della luce tra due mezzi?",o:["Riflessione","Diffrazione","Rifrazione","Dispersione"],r:2,m:"fisica"},
+  {t:"Raddoppio massa e dimezzo accelerazione. La forza risultante è:",o:["Dimezzata","Doppia","Quadrupla","Invariata"],r:3,m:"fisica"},
+  {t:"Unità di misura dell'energia nel SI?",o:["Watt","Newton","Joule","Pascal"],r:2,m:"fisica"},
+  {t:"La spinta di Archimede è pari a:",o:["Il peso del corpo","La massa del fluido","Il peso del fluido spostato","Il volume del corpo"],r:2,m:"fisica"},
+  {t:"Temperatura di ebollizione dell'azoto liquido?",o:["-100C","-196C","-78C","-273C"],r:1,m:"fisica"},
+  {t:"Tasti per copiare il testo in Windows?",o:["Ctrl+X","Ctrl+V","Ctrl+C","Ctrl+Z"],r:2,m:"informatica"},
+  {t:"PDF sta per:",o:["Program Data File","Portable Document Format","Personal Data Format","Print Document File"],r:1,m:"informatica"},
+  {t:"Le cartelle del computer simulano:",o:["I file eseguibili","I faldoni di archiviazione","I cookie","I driver"],r:1,m:"informatica"},
+  {t:"Funzione del tasto Backspace?",o:["Cancella il carattere a destra","Cancella il carattere a sinistra","Va a capo","Salva il documento"],r:1,m:"informatica"},
+  {t:"Browser sviluppato da Google?",o:["Firefox","Safari","Edge","Chrome"],r:3,m:"informatica"},
+  {t:"URL sta per:",o:["Universal Resource Link","Uniform Resource Locator","Universal Record Locator","Uniform Resource Label"],r:1,m:"informatica"},
+  {t:"Estensione di un file Microsoft Word?",o:[".txt",".pdf",".docx",".xlsx"],r:2,m:"informatica"},
+  {t:"Quanti bit in un byte?",o:["4","16","8","32"],r:2,m:"informatica"},
+  {t:"RAM sta per:",o:["Read All Memory","Random Access Memory","Rapid Application Manager","Read And Memorize"],r:1,m:"informatica"},
+  {t:"Dispositivo per connettersi a Internet?",o:["Switch","Hub","Modem/Router","Scheda video"],r:2,m:"informatica"},
+  {t:"In Excel, B3 indica:",o:["Terza colonna, seconda riga","Seconda colonna, terza riga","Terza riga, terza col.","Seconda riga, seconda col."],r:1,m:"informatica"},
+  {t:"Phishing è:",o:["Un virus informatico","Tecnica per rubare dati tramite messaggi ingannevoli","Un software di sicurezza","Un protocollo di rete"],r:1,m:"informatica"},
+  {t:"Wi-Fi sta per:",o:["Wireless Fidelity","Wide Field Internet","Wireless File Internet","World Fidelity Internet"],r:0,m:"informatica"},
+  {t:"Tasto per rinominare un file in Windows?",o:["F1","F2","F5","F10"],r:1,m:"informatica"},
+  {t:"Cosa fa Ctrl+Z?",o:["Copia","Incolla","Annulla l'ultima azione","Chiude l'app"],r:2,m:"informatica"},
+  {t:"Choose the correct sentence:",o:["She don't like coffee.","She doesn't likes coffee.","She doesn't like coffee.","She not like coffee."],r:2,m:"inglese"},
+  {t:"Past tense of go?",o:["Goed","Gone","Going","Went"],r:3,m:"inglese"},
+  {t:"Nobody believed Tom but he _______ to be right.",o:["proved","prooved","was proved","has prove"],r:0,m:"inglese"},
+  {t:"The fire _______ for three hours before the firefighters arrived.",o:["burned","has been burning","had been burning","was burning"],r:2,m:"inglese"},
+  {t:"Which word means to put out a fire?",o:["Ignite","Extinguish","Inflame","Kindle"],r:1,m:"inglese"},
+  {t:"If I _______ rich, I would travel the world.",o:["am","was","were","be"],r:2,m:"inglese"},
+  {t:"Plural of child?",o:["Childs","Children","Childrens","Childes"],r:1,m:"inglese"},
+  {t:"She is a doctor, _______?",o:["isn't she","is she","wasn't she","doesn't she"],r:0,m:"inglese"},
+  {t:"Which sentence is correct?",o:["I have been here since two hours.","I have been here for two hours.","I am here since two hours.","I was here for two hours ago."],r:1,m:"inglese"},
+  {t:"Emergency exit means:",o:["Ingresso principale","Uscita di servizio","Uscita di emergenza","Corridoio di sicurezza"],r:2,m:"inglese"},
+  {t:"This ladder is _______ than that one.",o:["more long","longest","longer","most long"],r:2,m:"inglese"},
+  {t:"Flammable means:",o:["Resistente al fuoco","Non infiammabile","Infiammabile","Bagnato"],r:2,m:"inglese"},
+  {t:"Passive of: The team rescued the victims.",o:["The victims rescued the team.","The victims were rescued by the team.","The victims have rescued by the team.","The victims was rescued by the team."],r:1,m:"inglese"},
+  {t:"Hazardous material means:",o:["Materiale riciclabile","Materiale pesante","Materiale pericoloso","Materiale edile"],r:2,m:"inglese"},
+  {t:"You _______ smoke here, it is strictly forbidden.",o:["mustn't","don't have to","shouldn't","needn't"],r:0,m:"inglese"}
+];
+
+var LETTERE=["A","B","C","D"];
+var sessione=[],idx=0,pt=0,risposte={},timerID=null,sec=2400,selezionata=null;
+var erroriMostrati=false;
+
+function shuffle(a){
+  var b=[].concat(a);
+  for(var i=b.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=b[i];b[i]=b[j];b[j]=t;
+  }
+  return b;
+}
+function filtra(m){return BANCA.filter(function(d){return d.m===m;});}
+function costruisci(){
+  var target={storia:8,logica:8,chimica:6,fisica:6,informatica:6,inglese:6};
+  var pool=[];
+  for(var mat in target){pool=pool.concat(shuffle(filtra(mat)).slice(0,target[mat]));}
+  return shuffle(pool);
+}
+function mostra(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+
+// HOME init
+(function(){
+  var cnt={};
+  BANCA.forEach(function(d){cnt[d.m]=(cnt[d.m]||0)+1;});
+  var html='';
+  for(var k in MATERIE){
+    var m=MATERIE[k];
+    html+='<div class="mat-row">'
+      +'<div class="mat-dot" style="background:'+m.dot+'"></div>'
+      +'<div class="mat-nome">'+m.nome+'</div>'
+      +'<div class="mat-cnt">'+(cnt[k]||0)+' quesiti</div>'
+      +'</div>';
+  }
+  document.getElementById('mat-list').innerHTML=html;
+})();
+
+function avviaQuiz(){
+  sessione=costruisci();
+  idx=0;pt=0;risposte={};selezionata=null;sec=2400;
+  erroriMostrati=false;
+  mostra('quiz');
+  renderDomanda();
+  clearInterval(timerID);
+  timerID=setInterval(function(){
+    sec--;
+    var m=String(Math.floor(sec/60)).padStart(2,'0');
+    var s=String(sec%60).padStart(2,'0');
+    var el=document.getElementById('q-timer');
+    el.textContent=m+':'+s;
+    el.className='q-timer'+(sec<=300?' red':sec<=600?' ora':'');
+    if(sec<=0){clearInterval(timerID);mostraRisultati();}
+  },1000);
+}
+
+function renderDomanda(){
+  var d=sessione[idx];
+  var mat=MATERIE[d.m];
+  selezionata=null;
+  document.getElementById('q-cnt').textContent='Dom. '+(idx+1)+'/'+sessione.length;
+  document.getElementById('prog-bar').style.width=(((idx+1)/sessione.length)*100)+'%';
+  var badge=document.getElementById('mat-badge');
+  badge.textContent=mat.nome;
+  badge.style.background=mat.sfondo;
+  badge.style.color=mat.colore;
+  document.getElementById('pt-badge').textContent='Corrette: '+pt;
+  document.getElementById('q-testo').textContent=d.t;
+  var html='';
+  for(var i=0;i<4;i++){
+    html+='<button class="opt-btn" onclick="seleziona('+i+')" id="opt'+i+'">'
+      +'<div class="opt-let" id="let'+i+'">'+LETTERE[i]+'</div>'
+      +'<div class="opt-txt">'+d.o[i]+'</div>'
+      +'<div class="opt-ico" id="ico'+i+'"></div>'
+      +'</button>';
+  }
+  document.getElementById('opt-list').innerHTML=html;
+  var btn=document.getElementById('btn-avanti');
+  btn.classList.remove('on');
+  btn.textContent=idx<sessione.length-1?'Prossima domanda →':'Vedi risultati →';
+}
+
+function seleziona(i){
+  if(selezionata!==null)return;
+  selezionata=i;
+  risposte[idx]=i;
+  var d=sessione[idx];
+  if(i===d.r)pt++;
+  for(var j=0;j<4;j++){
+    var btn=document.getElementById('opt'+j);
+    btn.disabled=true;
+    if(j===d.r){btn.classList.add('ok');document.getElementById('ico'+j).textContent='✅';}
+    else if(j===i){btn.classList.add('err');document.getElementById('ico'+j).textContent='❌';}
+  }
+  document.getElementById('pt-badge').textContent='Corrette: '+pt;
+  document.getElementById('btn-avanti').classList.add('on');
+}
+
+function avanti(){
+  if(idx<sessione.length-1){idx++;renderDomanda();}
+  else{clearInterval(timerID);mostraRisultati();}
+}
+
+function mostraRisultati(){
+  mostra('risultati');
+  var tot=sessione.length;
+  var perc=Math.round(pt/tot*100);
+  var emoji=perc>=85?'🏆':perc>=70?'🎉':perc>=60?'✅':'📚';
+  var msg=perc>=85?'Eccellente! Sei pronto per il concorso.':
+          perc>=70?'Buon risultato, continua così.':
+          perc>=60?'Sufficiente. Ripassia i punti deboli.':
+          'Da migliorare. Studia ancora!';
+  document.getElementById('res-ico').textContent=emoji;
+  document.getElementById('res-score').textContent=pt+' / '+tot;
+  document.getElementById('res-perc').textContent=perc+'%';
+  document.getElementById('res-msg').textContent=msg;
+
+  // Materie
+  var html='';
+  for(var k in MATERIE){
+    var mat=MATERIE[k];
+    var dm=sessione.filter(function(d){return d.m===k;});
+    if(!dm.length)continue;
+    var ok=0;
+    for(var i=0;i<dm.length;i++){
+      var gi=sessione.indexOf(dm[i]);
+      if(risposte[gi]===dm[i].r)ok++;
+    }
+    var p=Math.round(ok/dm.length*100);
+    html+='<div class="mat-res">'
+      +'<div class="mat-res-hdr">'
+      +'<span class="mat-res-nome" style="color:'+mat.colore+'">'+mat.nome+'</span>'
+      +'<span class="mat-res-pt" style="color:'+mat.colore+'">'+ok+'/'+dm.length+'</span>'
+      +'</div>'
+      +'<div class="bar-bg"><div class="bar-fill" style="width:'+p+'%;background:'+mat.dot+'"></div></div>'
+      +'</div>';
+  }
+  document.getElementById('res-materie').innerHTML=html;
+
+  // Prepara lista errori (nascosta)
+  var errHtml='';
+  var numErrore=0;
+  for(var i=0;i<sessione.length;i++){
+    var d=sessione[i];
+    var datorisposta=risposte[i];
+    if(datorisposta===undefined||datorisposta!==d.r){
+      numErrore++;
+      var datatoTesto=datorisposta!==undefined?d.o[datorisposta]:'Non risposta';
+      errHtml+='<div class="errore-card">'
+        +'<div class="errore-num">Domanda '+(i+1)+' — '+MATERIE[d.m].nome+'</div>'
+        +'<div class="errore-domanda">'+d.t+'</div>'
+        +'<div class="errore-row">'
+        +'<span class="errore-label label-data">Hai risposto</span>'
+        +'<span class="errore-testo">'+datatoTesto+'</span>'
+        +'</div>'
+        +'<div class="errore-row">'
+        +'<span class="errore-label label-ok">Corretta</span>'
+        +'<span class="errore-testo">'+d.o[d.r]+'</span>'
+        +'</div>'
+        +'</div>';
+    }
+  }
+  document.getElementById('errori-lista').innerHTML=errHtml||'<p style="font-size:13px;color:#6b7280;padding:8px 0">Nessun errore! Perfetto 🎉</p>';
+
+  // Aggiorna testo bottone toggle
+  var btnToggle=document.getElementById('btn-toggle-errori');
+  btnToggle.textContent='❌ Mostra risposte sbagliate ('+numErrore+')';
+  erroriMostrati=false;
+  document.getElementById('errori-sezione').style.display='none';
+}
+
+function toggleErrori(){
+  erroriMostrati=!erroriMostrati;
+  var sezione=document.getElementById('errori-sezione');
+  var btn=document.getElementById('btn-toggle-errori');
+  sezione.style.display=erroriMostrati?'block':'none';
+  // conta errori
+  var n=0;
+  for(var i=0;i<sessione.length;i++){
+    if(risposte[i]===undefined||risposte[i]!==sessione[i].r)n++;
+  }
+  btn.textContent=erroriMostrati?'▲ Nascondi risposte sbagliate':'❌ Mostra risposte sbagliate ('+n+')';
+  if(erroriMostrati){
+    setTimeout(function(){
+      document.getElementById('errori-sezione').scrollIntoView({behavior:'smooth'});
+    },100);
+  }
+}
+
+function condividiWhatsApp(){
+  var tot=sessione.length;
+  var perc=Math.round(pt/tot*100);
+  var emoji=perc>=85?'🏆':perc>=70?'🎉':perc>=60?'✅':'📚';
+
+  // Conta errori per materia
+  var riepilogo='';
+  for(var k in MATERIE){
+    var dm=sessione.filter(function(d){return d.m===k;});
+    if(!dm.length)continue;
+    var ok=0;
+    for(var i=0;i<dm.length;i++){
+      var gi=sessione.indexOf(dm[i]);
+      if(risposte[gi]===dm[i].r)ok++;
+    }
+    riepilogo+='\n• '+MATERIE[k].nome+': '+ok+'/'+dm.length;
+  }
+
+  // Lista errori
+  var erroriTesto='';
+  var numE=0;
+  for(var i=0;i<sessione.length;i++){
+    var d=sessione[i];
+    if(risposte[i]===undefined||risposte[i]!==d.r){
+      numE++;
+      if(numE<=10){ // max 10 errori nel messaggio per non essere troppo lungo
+        erroriTesto+='\n'+(i+1)+'. '+d.t+'\n   ✅ '+d.o[d.r];
+      }
+    }
+  }
+  if(numE>10)erroriTesto+='\n...e altri '+(numE-10)+' errori';
+
+  var testo=emoji+' *Quiz VVF — Risultato*\n\n'
+    +'Punteggio: *'+pt+' / '+tot+'* ('+perc+'%)\n\n'
+    +'*Per materia:*'+riepilogo+'\n\n';
+
+  if(numE>0){
+    testo+='*Risposte sbagliate ('+numE+'):*'+erroriTesto+'\n\n';
+  } else {
+    testo+='Nessun errore! Prestazione perfetta! 🎉\n\n';
+  }
+  testo+='_Simulatore Concorso 350 VVF 2024_';
+
+  var url='https://wa.me/?text='+encodeURIComponent(testo);
+  window.open(url,'_blank');
+}
+
+function ricomincia(){mostra('home');}
+</script>
+</body>
+</html>
